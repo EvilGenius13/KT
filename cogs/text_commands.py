@@ -6,6 +6,7 @@ class TextCommands(commands.Cog):
     self.bot = bot
   
   @commands.command()
-  async def ping(self, ctx):
-    await ctx.send('pong')
+  async def hello(self, ctx):
+    user = ctx.message.author
+    await ctx.send(f'Hey {user.mention}')
   

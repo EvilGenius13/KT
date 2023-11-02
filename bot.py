@@ -1,10 +1,6 @@
 import discord
 from discord.ext import commands, tasks
 import os
-import asyncio
-import datetime
-import pytz
-import random
 
 from cogs.text_commands import TextCommands
 from cogs.voice_events import VoiceEvents

@@ -4,8 +4,6 @@ import datetime
 import pytz
 import random
 import asyncio
-import os
-import logging
 
 
 class VoiceEvents(commands.Cog):
@@ -84,6 +82,12 @@ class VoiceEvents(commands.Cog):
             while not vc.is_connected():
                 await asyncio.sleep(0.5)  # Wait for the voice client to connect
 
+            await self.bot.change_presence(
+            activity=discord.Activity(
+                type=discord.ActivityType.watching, name=f"Everyone play in {channel.name}"
+            )
+        )
+
             vc.stop()  # Stop any currently playing audio
             await asyncio.sleep(1)  # One second delay before talking
             random_intro = random.choice(self.intro_greetings)
@@ -102,3 +106,4 @@ class VoiceEvents(commands.Cog):
                 )  # Get the current voice client, if any
                 if vc:
                     await vc.disconnect()  # Disconnect from the voice channel
+                    await self.bot.change_presence(activity=None)
