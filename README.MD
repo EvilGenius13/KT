@@ -7,3 +7,8 @@ KT is a multipurpose discord bot.
 - Custom commands
 
 ## Commands
+
+
+### ToDo
+- Add YouTube song search
+- More Text Commands

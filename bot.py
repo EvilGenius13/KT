@@ -19,14 +19,13 @@ bot = commands.Bot(command_prefix='*', intents=discord.Intents.all())
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
 # TODO: Remove Eventually when local testing is no longer neededLocal Env Only
-if not discord.opus.is_loaded():
-    discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
+# if not discord.opus.is_loaded():
+#     discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
 
 @bot.event
 async def on_ready():
     print("KT is online")
     await bot.add_cog(TextCommands(bot))
     await bot.add_cog(VoiceEvents(bot))
-    # play_sound_at_9pm.start()  # Start the looping task
-
+# FIXME: Need to change the timer on the loop to 9PM EST & need to build linux container to run for Thursday.
 bot.run(DISCORD_TOKEN)
