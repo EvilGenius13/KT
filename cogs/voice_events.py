@@ -9,6 +9,9 @@ import asyncio
 class VoiceEvents(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.greeting_state = True
+        self.checkin_state = False
+        self.recurring_state = False
         self.intro_greetings = [
             "sounds/intro.mp3",
             "sounds/intro2.mp3",
@@ -60,8 +63,12 @@ class VoiceEvents(commands.Cog):
                         after=lambda e: print("done", e),
                     )
 
+
+
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
+        if self.greeting_state == False:
+            return
         channel = (
             after.channel or before.channel
         )  # Get the channel, either the joined or the left one

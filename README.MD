@@ -7,8 +7,16 @@ KT is a multipurpose discord bot.
 - Custom commands
 
 ## Commands
-
+- `*hello` - Says hello
+- `*toggle_voice_settings` - Toggles voice responses
 
 ### ToDo
+- Add more voice responses
 - Add YouTube song search
 - More Text Commands
+- Stean API integration
+
+### Bugs
+- `discord.errors.ClientException: Already playing audio.` When playing a sound even when nothing else is playing
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)
