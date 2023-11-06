@@ -1,30 +1,31 @@
 import discord
+from discord.ext import commands, tasks
 import os
-from discord.ext import commands
-import asyncio
+
+from cogs.text_commands import TextCommands
+from cogs.voice_events import VoiceEvents
+from cogs.steam_commands import SteamCommands
+from cogs.settings import Settings
+
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from dotenv import load_dotenv
-
 load_dotenv()
 
 bot = commands.Bot(command_prefix='*', intents=discord.Intents.all())
-
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+
+# TODO: Remove Eventually when local testing is no longer neededLocal Env Only
+if not discord.opus.is_loaded():
+    discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
 
 @bot.event
 async def on_ready():
-    print("Bot is ready")
-
-@bot.event
-async def on_voice_state_update(member, before, after):
-    if before.channel is None and after.channel is not None:  # User joined a voice channel
-        channel = after.channel  # The channel the user joined
-        if not discord.utils.get(bot.voice_clients, guild=member.guild):  # Check if bot is not already in a voice channel
-            vc = await channel.connect()  # Join the voice channel
-            vc.play(discord.FFmpegPCMAudio('sounds/greeting.mp3'), after=lambda e: print('done', e))
-            while vc.is_playing():
-                await asyncio.sleep(1)
-            await vc.disconnect()  # Disconnect from the voice channel after audio is done playing
-
+    print("KT is online")
+    await bot.add_cog(TextCommands(bot))
+    await bot.add_cog(SteamCommands(bot))
+    await bot.add_cog(VoiceEvents(bot))
+    await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents")))
 
 bot.run(DISCORD_TOKEN)
