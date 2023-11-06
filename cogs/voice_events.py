@@ -13,22 +13,20 @@ class VoiceEvents(commands.Cog):
         self.checkin_state = False
         self.recurring_state = False
         self.intro_greetings = [
-            "sounds/intro.mp3",
-            "sounds/intro2.mp3",
-            "sounds/intro3.mp3",
-            "sounds/intro4.mp3",
-            "sounds/intro5.mp3",
-            "sounds/intro6.mp3",
+            "sounds/hey.mp3",
+            "sounds/howdy.mp3",
+            "sounds/welcome.mp3",
+            "sounds/whatsup.mp3",
         ]
-        self.play_sound_at_9pm.start()  # Start the looping tasks
-        self.play_sound_every_two_hours.start()
+        self.schedule_break.start()  # Start the looping tasks
+        self.break_time.start()
 
     def cog_unload(self):
-        self.play_sound_at_9pm.cancel()  # Cancel the looping task when the cog is unloaded
-        self.play_sound_every_two_hours.cancel()
+        self.schedule_break.cancel()  # Cancel the looping task when the cog is unloaded
+        self.break_time.cancel()
 
     @tasks.loop(minutes=1)  # Check the time every minute
-    async def play_sound_at_9pm(self):
+    async def schedule_break(self):
         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
 
         # TODO: This is for testing purposes only. Remove when ready to deploy
@@ -49,7 +47,7 @@ class VoiceEvents(commands.Cog):
                     )
 
     @tasks.loop(minutes=1)  # Check the time every minute
-    async def play_sound_every_two_hours(self):
+    async def break_time(self):
         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
 
         if current_time.minute == 0 and current_time.hour % 2 == 0:
@@ -59,7 +57,7 @@ class VoiceEvents(commands.Cog):
                     vc.stop()
                     await asyncio.sleep(0.5)
                     vc.play(
-                        discord.FFmpegPCMAudio("sounds/elcheckin.mp3"),
+                        discord.FFmpegPCMAudio("sounds/checkin2.mp3"),
                         after=lambda e: print("done", e),
                     )
 

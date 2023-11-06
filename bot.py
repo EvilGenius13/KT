@@ -6,6 +6,7 @@ from cogs.text_commands import TextCommands
 from cogs.voice_events import VoiceEvents
 from cogs.steam_commands import SteamCommands
 from cogs.settings import Settings
+from cogs.music import Music
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -27,5 +28,6 @@ async def on_ready():
     await bot.add_cog(SteamCommands(bot))
     await bot.add_cog(VoiceEvents(bot))
     await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents")))
+    await bot.add_cog(Music(bot))
 
 bot.run(DISCORD_TOKEN)
