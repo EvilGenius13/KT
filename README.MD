@@ -7,16 +7,24 @@ KT is a multipurpose discord bot.
 - Custom commands
 
 ## Commands
-- `*hello` - Says hello
-- `*toggle_voice_settings` - Toggles voice responses
+- Regular Commands
+  - `*hello` - Says hello
+- Voice Commands
+  - `*toggle_voice_settings` - Toggle voice responses
+- Steam Commands
+  - `*steam_fetch <appid>` - Fetches steam game info
+  - `*watchlist` - Lists all games on watchlist
 
 ### ToDo
 - Add more voice responses
-- Add YouTube song search
 - More Text Commands
-- Stean API integration
+- Check if voice settings are server wide or for the bot itself
+- Allow timezone to be set
+- Allow timers to be set
+- Set up a database for storing settings
+- Set limits for who can change settings
 
 ### Bugs
-- `discord.errors.ClientException: Already playing audio.` When playing a sound even when nothing else is playing
+- `discord.errors.ClientException: Already playing audio.` When playing a sound even when nothing else is playing (Low severity)
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)

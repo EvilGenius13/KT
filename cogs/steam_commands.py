@@ -19,7 +19,7 @@ class FetchButton(discord.ui.Button):
             ctx = await cog.bot.get_context(message)
             
             # Call the fetch_game_details method
-            await cog.fetch_game_details(ctx, self.app_id)
+            await cog.steam_fetch(ctx, self.app_id)
         else:
             # Respond to the interaction with an error message
             await interaction.response.send_message('Failed to fetch game details.')
@@ -62,7 +62,7 @@ class SteamCommands(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def fetch_game_details(self, ctx, arg):
+    async def steam_fetch(self, ctx, arg):
         try:
             response = requests.get(
                 f"https://store.steampowered.com/api/appdetails?appids={arg}"
@@ -142,7 +142,7 @@ class SteamCommands(commands.Cog):
     
     @commands.command()
     async def fetch(self, ctx, arg):
-        await self.fetch_game_details(ctx, arg)
+        await self.steam_fetch(ctx, arg)
 
     @commands.command()
     async def watchlist(self, ctx):
@@ -153,7 +153,5 @@ class SteamCommands(commands.Cog):
             return
 
         view = WatchlistView(watchlist)
-        # watchlist_text = '\n'.join([f"App ID: {item['app_id']} | Game Name: {item['game_name']}" for item in watchlist])
-        # await ctx.send(f'**Watchlist**:\n{watchlist_text}', view=view)
         await ctx.send(view=view)
     
