@@ -17,7 +17,6 @@ KT is a multipurpose discord bot.
 
 ### ToDo
 - Add more voice responses
-- Add YouTube song search
 - More Text Commands
 - Check if voice settings are server wide or for the bot itself
 - Allow timezone to be set

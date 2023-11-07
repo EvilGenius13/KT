@@ -17,9 +17,10 @@ load_dotenv()
 bot = commands.Bot(command_prefix='*', intents=discord.Intents.all())
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
-# TODO: Remove Eventually when local testing is no longer neededLocal Env Only
-if not discord.opus.is_loaded():
-    discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
+# Local Development
+if os.getenv('LOCAL_ENV') == 'true':
+    if not discord.opus.is_loaded():
+        discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
 
 @bot.event
 async def on_ready():

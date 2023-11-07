@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  kt:
+    image: evilgenius13/kt:v1.0
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
