@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 import os
 
+from db.db import setup_db_connection
 from cogs.text_commands import TextCommands
 from cogs.voice_events import VoiceEvents
 from cogs.steam_commands import SteamCommands
@@ -30,5 +31,8 @@ async def on_ready():
     await bot.add_cog(VoiceEvents(bot))
     await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents")))
     await bot.add_cog(Music(bot))
+
+# Boot up the database connection
+# setup_db_connection()
 
 bot.run(DISCORD_TOKEN)

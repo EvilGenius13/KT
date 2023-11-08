@@ -14,17 +14,44 @@ KT is a multipurpose discord bot.
 - Steam Commands
   - `*steam_fetch <appid>` - Fetches steam game info
   - `*watchlist` - Lists all games on watchlist
+- Music Commands
+  - `*dj` - See how to use the music bot
+  - `*play <youtubeURL>` - Plays a song
+  - `*pause` - Paused the current song
+  - `*resume` - Resumes the current song
+  - `*stop` - Stops the music bot
+
 
 ### ToDo
-- Add more voice responses
-- More Text Commands
-- Check if voice settings are server wide or for the bot itself
-- Allow timezone to be set
-- Allow timers to be set
+- VoiceEvents
+  - Add more voice events
+  - Add more voice responses
+  - Set up recurring time states
+  - Allow timezone to be set
+  - Allow timers to be set
+- SteamCommands
+- TextCommands
+  - Add More Text Commands
+- MusicEvents
+  - Add text response before playing song.
+  - Add text response when next song starts.
+  - Add queue command to see what songs are in queue.
+- Add Shop / Site(TWS)
+  - Add currency
+  - Add shop items
+  - Add shop commands
+- Add mod mail
+  - Add mod mail commands
+  - Add mod mail events
+### Improvements
 - Set up a database for storing settings
 - Set limits for who can change settings
+- Logging
+- Spans and timing for functions
 
 ### Bugs
-- `discord.errors.ClientException: Already playing audio.` When playing a sound even when nothing else is playing (Low severity)
+- Docker build is failing on insufficient auth scopes (Mid severity)
+- Bot talks too fast sometimes (Low severity and seems to be handled)
+- Bot playing check ins even when disabled.
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)

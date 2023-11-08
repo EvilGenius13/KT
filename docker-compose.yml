@@ -6,6 +6,10 @@ services:
     container_name: kt
     environment:
       - DISCORD_TOKEN=your_discord_token_here
-    # Optional
-    # cpus: '1'
-    # mem_limit: 512m
+
+  scylla:
+    image: scylladb/scylla:5.2
+    container_name: scylla
+    command: --developer-mode=1 --smp 1
+    ports:
+      - "9042:9042"
