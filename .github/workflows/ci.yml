@@ -22,7 +22,7 @@ jobs:
         pytest tests/
     - name: Build Docker image
       run: |
-        docker build -t evilgenius13/kt:dev .
+        docker build --no-cache -t evilgenius13/kt:dev .
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
     - name: Push Docker image

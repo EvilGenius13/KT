@@ -17,6 +17,9 @@ load_dotenv()
 
 bot = commands.Bot(command_prefix='*', intents=discord.Intents.all())
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+if DISCORD_TOKEN is None:
+    raise ValueError("No DISCORD_TOKEN found in environment variables")
+
 
 # Local Development
 if os.getenv('LOCAL_ENV') == 'true':

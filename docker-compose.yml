@@ -2,10 +2,10 @@ version: '3.1'
 
 services:
   kt:
-    image: evilgenius13/kt:extralife
+    image: evilgenius13/kt:dev
     container_name: kt
     environment:
-      - DISCORD_TOKEN=your_discord_token_here
+      - DISCORD_TOKEN=yourtokenhere
 
   scylla:
     image: scylladb/scylla:5.2
