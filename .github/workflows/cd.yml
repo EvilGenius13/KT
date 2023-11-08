@@ -20,11 +20,11 @@ jobs:
     - name: Run tests
       run: |
         pytest tests/
-    - name: Build and push Docker image
-      if: success()
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: evilgenius13/kt:latest
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    - name: Build Docker image
+      run: |
+        docker build --no-cache -t evilgenius13/kt:dev .
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+    - name: Push Docker image
+      run: |
+        docker push evilgenius13/kt:dev

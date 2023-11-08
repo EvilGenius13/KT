@@ -20,12 +20,34 @@ class VoiceEvents(commands.Cog):
         self.greeting_state = True
         self.checkin_state = False
         self.recurring_state = False
-        self.check_in_hour = 21
-        self.check_in_minute = 0
+        self._current_hours = 0
+        self._current_minutes = 0
         
         # Start the looping tasks
         self.schedule_break.start()  # Start the looping tasks
         self.break_time.start()
+
+    @property
+    def current_hours(self):
+        return self._current_hours
+
+    @current_hours.setter
+    def current_hours(self, value):
+        if 0 <= value < 24:
+            self._current_hours = value
+        else:
+            raise ValueError("Hours must be between 0 and 23")
+    
+    @property
+    def current_minutes(self):
+        return self._current_minutes
+    
+    @current_minutes.setter
+    def current_minutes(self, value):
+        if 0 <= value < 60:
+            self._current_minutes = value
+        else:
+            raise ValueError("Minutes must be between 0 and 59")
 
     def cog_unload(self):
         self.schedule_break.cancel()  # Cancel the looping task when the cog is unloaded
@@ -38,8 +60,7 @@ class VoiceEvents(commands.Cog):
         
         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
 
-        # TODO: This is for testing purposes only. Remove when ready to deploy
-        if current_time.hour == self.check_in_hour and current_time.minute == self.check_in_minute:
+        if current_time.hour == self.current_hours and current_time.minute == self.current_minutes:
             for guild in self.bot.guilds:  # Check all guilds the bot is connected to
                 vc = discord.utils.get(self.bot.voice_clients, guild=guild)
                 if (
@@ -108,3 +129,5 @@ class VoiceEvents(commands.Cog):
                     if vc:
                         await vc.disconnect()
                         await self.bot.change_presence(activity=None)
+            else:
+                pass #? Trying to ignore mute/deafen events
