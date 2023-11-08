@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import asyncio
+import os
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -13,28 +14,42 @@ class Music(commands.Cog):
             self.song_queue[guild.id] = []
         return self.song_queue[guild.id]
 
+    def get_full_path(self, relative_path):
+        # This assumes your bot's main script is in the root of your project directory.
+        # If this is not the case, you need to adjust this accordingly.
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.normpath(os.path.join(root_dir, relative_path))
+    
     async def play_next_in_queue(self, guild):
         queue = self.get_guild_queue(guild)
         if queue:
             next_song = queue.pop(0)
-            await self.play_song(guild, next_song)
-
-    async def play_song(self, guild, song):
-        channel = song['channel']
-        vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-        if not vc:
-            vc = await channel.connect()
+            vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+            if vc:
+                full_path = self.get_full_path(next_song['filename'])
+                audio_source = discord.FFmpegPCMAudio(full_path)
+                # You can set the volume here (1.0 is the default volume, 0.5 for half volume, etc.)
+                audio_source = discord.PCMVolumeTransformer(audio_source, volume=0.4) 
+                print(f"Playing {full_path} at volume: {audio_source.volume}")
+                vc.play(audio_source, after=lambda e: self.after_playing(guild, full_path))
         
-        # Define the after function to play the next song in the queue
-        def after_playing(error):
-            fut = asyncio.run_coroutine_threadsafe(self.play_next_in_queue(guild), self.bot.loop)
+    def after_playing(self, guild, full_path):
+        # Check if the file exists before trying to remove it
+        if os.path.exists(full_path):
             try:
-                fut.result()
-            except:
-                pass  # Handle errors here if needed
-        
-        vc.play(discord.FFmpegPCMAudio(song['url']), after=after_playing)
+                os.remove(full_path)
+            except OSError as e:
+                print(f"Error: {full_path} : {e.strerror}")
+        else:
+            print(f"File not found: {full_path}")
 
+        # Schedule the next song to be played
+        asyncio.run_coroutine_threadsafe(self.play_next_in_queue(guild), self.bot.loop)
+
+    @commands.command(name='dj', help='What can I play for you?')
+    async def dj(self, ctx):
+        await ctx.send("What can I play for you? Copy and paste a YouTube URL like this: `!play https://www.youtube.com/watch?v=dQw4w9WgXcQ`")
+    
     @commands.command(name='play', help='Plays a song from YouTube')
     async def play(self, ctx, *, url):
         author = ctx.message.author
@@ -56,19 +71,22 @@ class Music(commands.Cog):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'outtmpl': 'downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s',
+            'outtmpl': self.get_full_path('downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s'),
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            download_url = info['url']
+            info = ydl.extract_info(url, download=True)
+            # Explicitly set the filename to the .mp3 version
+            filename = ydl.prepare_filename(info).replace('.webm', '.mp3')
             
             # Add song to queue
             queue = self.get_guild_queue(ctx.guild)
-            queue.append({'url': download_url, 'channel': channel})
+            queue.append({'filename': filename, 'channel': channel})
+            print(f"Added {filename} to queue for {ctx.guild.name}")
             
             # If a song is not currently playing, start playing
             if not vc.is_playing() and not vc.is_paused():
+                await ctx.send("DJ KT is on the decks!")
                 await self.play_next_in_queue(ctx.guild)
             else:
                 await ctx.send("Song added to the queue.")

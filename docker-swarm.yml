@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   kt:
-    image: evilgenius13/kt:v1.0
+    image: evilgenius13/kt:dev
     deploy:
       replicas: 1
       resources:
