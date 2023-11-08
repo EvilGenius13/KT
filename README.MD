@@ -33,7 +33,6 @@ KT is a multipurpose discord bot.
 - TextCommands
   - Add More Text Commands
 - MusicEvents
-  - Add text response before playing song.
   - Add text response when next song starts.
   - Add queue command to see what songs are in queue.
 - Add Shop / Site(TWS)
@@ -51,7 +50,5 @@ KT is a multipurpose discord bot.
 
 ### Bugs
 - Docker build is failing on insufficient auth scopes (Mid severity)
-- Bot talks too fast sometimes (Low severity and seems to be handled)
-- Bot playing check ins even when disabled.
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)
