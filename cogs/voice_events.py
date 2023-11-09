@@ -100,8 +100,8 @@ class VoiceEvents(commands.Cog):
             return
 
         async with self._voice_state_lock:  # Lock to ensure consistency
-            if after.channel is not None:
-                # User joined a voice channel
+            # User joined a voice channel
+            if before.channel is None and after.channel is not None:
                 vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
                 if not vc:
                     # Bot is not in a channel, so join the user's channel
@@ -119,15 +119,21 @@ class VoiceEvents(commands.Cog):
                     # Bot is already playing audio. Decide if you want to queue here.
                     print(f"Skipped greeting for {member} as audio is already playing.")
 
+            # User switched from one channel to another
+            elif before.channel is not None and after.channel is not None and before.channel != after.channel:
+                # Handle channel switch if necessary
+                pass
+
+            # User left a voice channel
             elif before.channel is not None and after.channel is None:
-                # User left a voice channel
-                if (
-                    len(before.channel.members) == 1
-                ):  # Check if bot is the only one left
+                # Check if bot is the only one left
+                if len(before.channel.members) == 1:
                     # Bot is alone in the voice channel, disconnect
                     vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
                     if vc:
                         await vc.disconnect()
                         await self.bot.change_presence(activity=None)
             else:
-                pass #? Trying to ignore mute/deafen events
+                # This is likely a mute/unmute or deafen/undeafen event, do nothing
+                pass
+

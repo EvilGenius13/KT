@@ -23,12 +23,15 @@ KT is a multipurpose discord bot.
 
 
 ### ToDo
+- Ephemeral Messages
+  - Add ephemeral messages to all commands
+- Scheduled Events
+  - Have KT create events at a set time
 - VoiceEvents
   - Add more voice events
   - Add more voice responses
   - Set up recurring time states
   - Allow timezone to be set
-  - Allow timers to be set
 - SteamCommands
 - TextCommands
   - Add More Text Commands
@@ -42,6 +45,8 @@ KT is a multipurpose discord bot.
 - Add mod mail
   - Add mod mail commands
   - Add mod mail events
+- OpenAI
+  - Add OpenAI assistant using context about TWS
 ### Improvements
 - Set up a database for storing settings
 - Set limits for who can change settings
@@ -49,6 +54,7 @@ KT is a multipurpose discord bot.
 - Spans and timing for functions
 
 ### Bugs
-- Docker build is failing on insufficient auth scopes (Mid severity)
+- VoiceEvents
+  - Voice events are being triggered on mute and deafen
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)
