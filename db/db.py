@@ -13,7 +13,7 @@ if os.getenv('LOCAL_ENV') == 'true':
     cluster = Cluster(['127.0.0.1'], protocol_version=4)
 else:
   auth_provider = PlainTextAuthProvider(username=scylla_username, password=scylla_password)
-  cluster = Cluster(['127.0.0.1'], auth_provider=auth_provider)
+  cluster = Cluster(['scylla'], auth_provider=auth_provider)
 
 def create_keyspace_and_tables(session):
     try:

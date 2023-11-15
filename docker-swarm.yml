@@ -11,3 +11,9 @@ services:
           memory: 512M
       restart_policy:
         condition: on-failure
+
+  scylla:
+    image: scylladb/scylla:5.2
+    container_name: scylla
+    ports:
+      - "9042:9042""
