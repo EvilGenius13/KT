@@ -58,9 +58,10 @@ def is_on_watchlist(watchlist_data, app_id):
     return any(item['app_id'] == app_id for item in watchlist_data)
 
 class SteamCommands(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
-
+        self.session = session
+        
     @commands.command()
     async def steam_fetch(self, ctx, arg):
         try:

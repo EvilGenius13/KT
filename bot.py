@@ -26,16 +26,20 @@ if os.getenv('LOCAL_ENV') == 'true':
     if not discord.opus.is_loaded():
         discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
 
+
 @bot.event
 async def on_ready():
     print("KT is online")
-    await bot.add_cog(TextCommands(bot))
-    await bot.add_cog(SteamCommands(bot))
-    await bot.add_cog(VoiceEvents(bot))
-    await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents")))
-    await bot.add_cog(Music(bot))
+    
+    # Boot up the database connection
+    session = setup_db_connection()
+    
+    # Initiate cog objects
+    bot.add_cog(TextCommands(bot))
+    bot.add_cog(SteamCommands(bot, session))
+    bot.add_cog(VoiceEvents(bot))
+    bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
+    bot.add_cog(Music(bot))
 
-# Boot up the database connection
-# setup_db_connection()
 
 bot.run(DISCORD_TOKEN)
