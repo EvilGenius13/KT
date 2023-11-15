@@ -27,6 +27,7 @@ if os.getenv('LOCAL_ENV') == 'true':
         discord.opus.load_opus('/opt/homebrew/Cellar/opus/1.4/lib/libopus.dylib')
 
 
+# Add local version with no await
 @bot.event
 async def on_ready():
     print("KT is online")
