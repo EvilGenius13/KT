@@ -3,6 +3,8 @@ version: '3.7'
 services:
   kt:
     image: evilgenius13/kt:dev
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
     deploy:
       replicas: 1
       resources:
@@ -16,4 +18,4 @@ services:
     image: scylladb/scylla:5.2
     container_name: scylla
     ports:
-      - "9042:9042""
+      - "9042:9042"

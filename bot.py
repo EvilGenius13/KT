@@ -35,11 +35,11 @@ async def on_ready():
     session = setup_db_connection()
     
     # Initiate cog objects
-    bot.add_cog(TextCommands(bot))
-    bot.add_cog(SteamCommands(bot, session))
-    bot.add_cog(VoiceEvents(bot))
-    bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
-    bot.add_cog(Music(bot))
+    await bot.add_cog(TextCommands(bot))
+    await bot.add_cog(SteamCommands(bot, session))
+    await bot.add_cog(VoiceEvents(bot))
+    await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
+    await bot.add_cog(Music(bot))
 
 
 bot.run(DISCORD_TOKEN)

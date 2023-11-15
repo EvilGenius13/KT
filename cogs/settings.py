@@ -14,6 +14,20 @@ class Settings(commands.Cog):
         guild_id = str(ctx.guild.id)
         guild_name = ctx.guild.name
 
+        # Check if guild is already registered
+        try:
+            result = self.session.execute("""
+                SELECT guild_id FROM bot_keyspace.guilds WHERE guild_id = %s
+                """, (guild_id,))
+            if result.one():
+                # Guild is already registered
+                await ctx.send(f"Your guild, {guild_name}, is already registered.")
+                return
+        except Exception as e:
+            await ctx.send(f"Error checking registration for {guild_name}: {e}")
+            return
+        
+        # Register guild if not already registered
         try:
             self.session.execute("""
                 INSERT INTO bot_keyspace.guilds (guild_id, guild_name, voice_setting)
