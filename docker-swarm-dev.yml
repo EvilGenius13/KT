@@ -16,8 +16,7 @@ services:
   kt:
     image: evilgenius13/kt:dev
     depends_on:
-      scylla:
-        condition: service_healthy
+      - scylla
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
     deploy:
