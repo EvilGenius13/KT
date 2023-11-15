@@ -1,6 +1,6 @@
 # KT
 ![Dev Build](https://github.com/EvilGenius13/KT/actions/workflows/ci.yml/badge.svg)
-![Release Build](https://github.com/EvilGesniu13/KT/actions/workflows/cd.yml/badge.svg)
+![Release Build](https://github.com/EvilGenius13/KT/actions/workflows/cd.yml/badge.svg)
 KT is a multipurpose discord bot.
 
 ## Features
