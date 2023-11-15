@@ -14,7 +14,7 @@ services:
       retries: 5
   
   kt:
-    image: evilgenius13/kt:prod
+    image: evilgenius13/kt:dev
     depends_on:
       - scylla
     environment:

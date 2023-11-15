@@ -4,33 +4,38 @@ from discord.ui import Button, View
 
 
 class Settings(commands.Cog):
-    def __init__(self, bot, voice_events_cog):
+    def __init__(self, bot, voice_events_cog, session):
         self.bot = bot
         self.voice_events_cog = voice_events_cog
+        self.session = session
 
-    # EXAMPLES TODO: Remove these
-    # @commands.command()
-    # async def button_test(self, ctx):
-    #     button = Button(label="Click me!", style=discord.ButtonStyle.green, emoji="👋")
-    #     button2 = Button(label="Don't click me!", style=discord.ButtonStyle.red, emoji="🚫")
-    #     button3 = Button(label="Steam Page", style=discord.ButtonStyle.url, url="https://store.steampowered.com/app/730/CounterStrike_Global_Offensive/")
-    #     view = View()
-    #     view.add_item(button)
-    #     view.add_item(button2)
-    #     view.add_item(button3)
-    #     user = ctx.message.author
-    #     await ctx.send(f"Hey {user.mention}", view=view)
+    @commands.command()
+    async def register(self, ctx):
+        guild_id = str(ctx.guild.id)
+        guild_name = ctx.guild.name
 
-    # @commands.command()
-    # async def button_hello(self, ctx):
-    #     button = Button(label="Click me!", style=discord.ButtonStyle.green, emoji="👋")
-    #     async def button_callback(interaction: discord.Interaction):
-    #         await interaction.response.send_message("Hi!")
-    #     button.callback = button_callback
-    #     view = View()
-    #     view.add_item(button)
-    #     user = ctx.message.author
-    #     await ctx.send(f"Hey {user.mention}", view=view)
+        # Check if guild is already registered
+        try:
+            result = self.session.execute("""
+                SELECT guild_id FROM bot_keyspace.guilds WHERE guild_id = %s
+                """, (guild_id,))
+            if result.one():
+                # Guild is already registered
+                await ctx.send(f"Your guild, {guild_name}, is already registered.")
+                return
+        except Exception as e:
+            await ctx.send(f"Error checking registration for {guild_name}: {e}")
+            return
+        
+        # Register guild if not already registered
+        try:
+            self.session.execute("""
+                INSERT INTO bot_keyspace.guilds (guild_id, guild_name, voice_setting)
+                VALUES (%s, %s, %s)
+                """, (guild_id, guild_name, False))
+            await ctx.send(f"Registered {guild_name} successfully.")
+        except Exception as e:
+            await ctx.send(f"Error registering {guild_name}: {e}")
 
     @commands.command()
     async def toggle_voice_settings(self, ctx):
