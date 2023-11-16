@@ -15,6 +15,47 @@ else:
   auth_provider = PlainTextAuthProvider(username=scylla_username, password=scylla_password)
   cluster = Cluster(['scylla'], auth_provider=auth_provider, protocol_version=4)
 
+async def get_guild_settings(session, guild_id):
+    """
+    Retrieves the settings for a specific guild from the database.
+
+    Args:
+    session (Cluster.Session): The Cassandra session object.
+    guild_id (str): The ID of the guild.
+
+    Returns:
+    dict: A dictionary containing the settings, or None if the guild is not found.
+    """
+
+    query = "SELECT voice_greeting, voice_break_time, voice_schedule_break FROM bot_keyspace.guilds WHERE guild_id = %s"
+    result = session.execute(query, [guild_id])
+    row = result.one()
+    if row:
+        return {
+            "voice_greeting": row.voice_greeting,
+            "voice_break_time": row.voice_break_time,
+            "voice_schedule_break": row.voice_schedule_break,
+        }
+    else:
+        return None
+    
+async def update_guild_settings(session, guild_id, settings):
+    """
+    Updates the settings for a specific guild in the database.
+
+    Args:
+    session (Cluster.Session): The Cassandra session object.
+    guild_id (str): The ID of the guild.
+    settings (dict): A dictionary containing the settings to be updated.
+    """
+    query = """
+    UPDATE bot_keyspace.guilds 
+    SET voice_greeting = %s, voice_break_time = %s, voice_schedule_break = %s
+    WHERE guild_id = %s
+    """
+    values = (settings['voice_greeting'], settings['voice_break_time'], settings['voice_schedule_break'], guild_id)
+    session.execute(query, values)
+    
 def create_keyspace_and_tables(session):
     try:
         # Create Keyspace
@@ -31,8 +72,9 @@ def create_keyspace_and_tables(session):
             CREATE TABLE IF NOT EXISTS guilds (
                 guild_id text PRIMARY KEY,
                 guild_name text,
-                voice_setting boolean
-                -- Add other fields here
+                voice_greeting boolean,
+                voice_break_time boolean,
+                voice_schedule_break boolean
             )
             """)
 

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ui import Button, View
-
+from db.db import get_guild_settings, update_guild_settings
 
 class Settings(commands.Cog):
     def __init__(self, bot, voice_events_cog, session):
@@ -30,87 +30,90 @@ class Settings(commands.Cog):
         # Register guild if not already registered
         try:
             self.session.execute("""
-                INSERT INTO bot_keyspace.guilds (guild_id, guild_name, voice_setting)
-                VALUES (%s, %s, %s)
-                """, (guild_id, guild_name, False))
+                INSERT INTO bot_keyspace.guilds (
+                    guild_id, 
+                    guild_name, 
+                    voice_greeting,
+                    voice_break_time,
+                    voice_schedule_break
+                )
+                VALUES (%s, %s, %s, %s, %s)
+                """, (guild_id, guild_name, False, False, False))
             await ctx.send(f"Registered {guild_name} successfully.")
         except Exception as e:
             await ctx.send(f"Error registering {guild_name}: {e}")
 
     @commands.command()
     async def toggle_voice_settings(self, ctx):
-        button = Button(
-            label=f"Voice Greeting = {'On' if self.voice_events_cog.greeting_state else 'Off'}",
-            style=discord.ButtonStyle.green
-            if self.voice_events_cog.greeting_state
-            else discord.ButtonStyle.red,
-            custom_id="toggle_voice_greeting",
+        guild_id = str(ctx.guild.id)
+        settings = await get_guild_settings(self.session, guild_id)
+
+        if settings is None:
+            await ctx.send("Guild settings not found. Please register your guild first.")
+            return
+
+        def create_button(label, style, custom_id):
+            return Button(label=label, style=style, custom_id=custom_id)
+
+        button = create_button(
+            f"Voice Greeting = {'On' if settings['voice_greeting'] else 'Off'}",
+            discord.ButtonStyle.green if settings['voice_greeting'] else discord.ButtonStyle.red,
+            "toggle_voice_greeting"
         )
-        button2 = Button(
-            label=f"Checkin = {'On' if self.voice_events_cog.checkin_state else 'Off'}",
-            style=discord.ButtonStyle.green
-            if self.voice_events_cog.checkin_state
-            else discord.ButtonStyle.red,
-            custom_id="toggle_checkin",
+        button2 = create_button(
+            f"Checkin = {'On' if settings['voice_break_time'] else 'Off'}",
+            discord.ButtonStyle.green if settings['voice_break_time'] else discord.ButtonStyle.red,
+            "toggle_checkin"
         )
-        button3 = Button(
-            label=f"Recurring = {'On' if self.voice_events_cog.recurring_state else 'Off'}",
-            style=discord.ButtonStyle.green
-            if self.voice_events_cog.recurring_state
-            else discord.ButtonStyle.red,
-            custom_id="toggle_recurring",
+        button3 = create_button(
+            f"Recurring = {'On' if settings['voice_schedule_break'] else 'Off'}",
+            discord.ButtonStyle.green if settings['voice_schedule_break'] else discord.ButtonStyle.red,
+            "toggle_recurring"
         )
 
         async def button_callback(interaction: discord.Interaction):
             custom_id = interaction.data["custom_id"]
-            print(
-                f"{self.voice_events_cog.greeting_state}, {self.voice_events_cog.checkin_state}, {self.voice_events_cog.recurring_state}"
-            )
+            guild_id = str(ctx.guild.id)
 
-            if custom_id == "toggle_voice_greeting":
-                self.voice_events_cog.greeting_state = (
-                    not self.voice_events_cog.greeting_state
-                )
-                button.label = f"Voice Greeting = {'On' if self.voice_events_cog.greeting_state else 'Off'}"
-                button.style = (
-                    discord.ButtonStyle.green
-                    if self.voice_events_cog.greeting_state
-                    else discord.ButtonStyle.red
-                )
-            elif custom_id == "toggle_checkin":
-                self.voice_events_cog.checkin_state = (
-                    not self.voice_events_cog.checkin_state
-                )
-                button2.label = f"Checkin = {'On' if self.voice_events_cog.checkin_state else 'Off'}"
-                button2.style = (
-                    discord.ButtonStyle.green
-                    if self.voice_events_cog.checkin_state
-                    else discord.ButtonStyle.red
-                )  # Corrected button reference
-            elif custom_id == "toggle_recurring":
-                self.voice_events_cog.recurring_state = (
-                    not self.voice_events_cog.recurring_state
-                )
-                button3.label = f"Recurring = {'On' if self.voice_events_cog.recurring_state else 'Off'}"
-                button3.style = (
-                    discord.ButtonStyle.green
-                    if self.voice_events_cog.recurring_state
-                    else discord.ButtonStyle.red
-                )  # Corrected button reference
+            # Map custom_id to the actual settings key
+            id_to_setting_key = {
+                "toggle_voice_greeting": "voice_greeting",
+                "toggle_checkin": "voice_break_time",
+                "toggle_recurring": "voice_schedule_break"
+            }
 
-            await interaction.response.edit_message(
-                view=view
-            )  # Update the message with the new view
+            # Fetch current settings
+            current_settings = await get_guild_settings(self.session, guild_id)
 
+            # Determine which setting to toggle and update
+            setting_key = id_to_setting_key.get(custom_id)
+            if setting_key:
+                current_settings[setting_key] = not current_settings[setting_key]
+
+                # Update the settings in the database
+                await update_guild_settings(self.session, guild_id, current_settings)
+
+                # Update button labels and styles
+                for btn in view.children:
+                    if btn.custom_id == custom_id:
+                        btn.label = f"{setting_key.replace('_', ' ').capitalize()} = {'On' if current_settings[setting_key] else 'Off'}"
+                        btn.style = discord.ButtonStyle.green if current_settings[setting_key] else discord.ButtonStyle.red
+                        break
+
+            await interaction.response.edit_message(view=view)
+
+        # Set the callback for each button
         button.callback = button_callback
         button2.callback = button_callback
         button3.callback = button_callback
 
+        # Create and display the view with buttons
         view = View()
         view.add_item(button)
         view.add_item(button2)
         view.add_item(button3)
-        await ctx.send("Click the button to toggle voice greetings.", view=view)
+
+        await ctx.send("Click the button to toggle voice settings.", view=view)
 
     @commands.command()
     async def set_scheduled_break(self, ctx, arg):

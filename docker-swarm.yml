@@ -12,7 +12,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+    volumes:
+      - scylla_data:/var/lib/scylla
+
   kt:
     image: evilgenius13/kt:prod
     depends_on:
@@ -27,3 +29,6 @@ services:
           memory: 512M
       restart_policy:
         condition: on-failure
+
+volumes:
+  scylla_data:
