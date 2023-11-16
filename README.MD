@@ -26,6 +26,8 @@ KT is a multipurpose discord bot.
 
 
 ### ToDo
+- TODO: voice events timing needs to move to DB
+- TODO: Steam needs to move to DB
 - Ephemeral Messages
   - Add ephemeral messages to all commands
 - Scheduled Events
@@ -51,13 +53,12 @@ KT is a multipurpose discord bot.
 - OpenAI
   - Add OpenAI assistant using context about TWS
 ### Improvements
-- Set up a database for storing settings
 - Set limits for who can change settings
 - Logging
 - Spans and timing for functions
 
 ### Bugs
 - VoiceEvents
-  - Voice events are being triggered on mute and deafen
+  - Voice sometimes loads super speedy
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)
