@@ -38,7 +38,7 @@ async def on_ready():
     # Initiate cog objects
     await bot.add_cog(TextCommands(bot))
     await bot.add_cog(SteamCommands(bot, session))
-    await bot.add_cog(VoiceEvents(bot))
+    await bot.add_cog(VoiceEvents(bot, session))
     await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
     await bot.add_cog(Music(bot))
 

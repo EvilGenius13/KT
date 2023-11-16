@@ -4,12 +4,14 @@ import datetime
 import pytz
 import random
 import asyncio
+from db.db import get_guild_settings
 
 
 class VoiceEvents(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, session):
         self.bot = bot
         self._voice_state_lock = asyncio.Lock()
+        self.session = session
         self.intro_greetings = [
             "sounds/hey.mp3",
             "sounds/howdy.mp3",
@@ -17,9 +19,6 @@ class VoiceEvents(commands.Cog):
             "sounds/whatsup.mp3",
         ]
         #Setting up states
-        self.greeting_state = True
-        self.checkin_state = False
-        self.recurring_state = False
         self._current_hours = 0
         self._current_minutes = 0
         
@@ -55,50 +54,62 @@ class VoiceEvents(commands.Cog):
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def schedule_break(self):
-        if not self.checkin_state:
-            return
-        
         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        for guild in self.bot.guilds:
+            guild_id = str(guild.id)
+            settings = await get_guild_settings(self.session, guild_id)
 
-        if current_time.hour == self.current_hours and current_time.minute == self.current_minutes:
-            for guild in self.bot.guilds:  # Check all guilds the bot is connected to
-                vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-                if (
-                    vc and vc.is_connected()
-                ):  # If the bot is connected to a voice channel in this guild
-                    vc.stop()  # Stop any currently playing audio
-                    await asyncio.sleep(
-                        0.5
-                    )  # Optional: wait for half a second before playing the new audio
-                    vc.play(
-                        discord.FFmpegPCMAudio("sounds/checkin.mp3"),
-                        after=lambda e: print("done", e),
-                    )
+            if settings is None or not settings["voice_schedule_break"]:
+                return
+            
+
+            if current_time.hour == self.current_hours and current_time.minute == self.current_minutes:
+                for guild in self.bot.guilds:  # Check all guilds the bot is connected to
+                    vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+                    if (
+                        vc and vc.is_connected()
+                    ):  # If the bot is connected to a voice channel in this guild
+                        vc.stop()  # Stop any currently playing audio
+                        await asyncio.sleep(
+                            0.5
+                        )  # Optional: wait for half a second before playing the new audio
+                        vc.play(
+                            discord.FFmpegPCMAudio("sounds/checkin.mp3"),
+                            after=lambda e: print("done", e),
+                        )
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def break_time(self):
-        if not self.recurring_state:
-            return
-        
         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
         
-        # if current_time.minute % 5 == 0:  # If the current minute is a multiple of 5 **FOR TESTING PURPOSES**
-        if current_time.minute == 0 and current_time.hour % 2 == 0:
-            for guild in self.bot.guilds:
-                vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-                if vc and vc.is_connected():
-                    vc.stop()
-                    await asyncio.sleep(0.5)
-                    vc.play(
-                        discord.FFmpegPCMAudio("sounds/checkin2.mp3"),
-                        after=lambda e: print("done", e),
-                    )
+        for guild in self.bot.guilds:
+            guild_id = str(guild.id)
+            settings = await get_guild_settings(self.session, guild_id)
+
+            if settings is None or not settings["voice_schedule_break"]:
+                return
+            
+            
+            # if current_time.minute % 5 == 0:  # If the current minute is a multiple of 5 **FOR TESTING PURPOSES**
+            if current_time.minute == 0 and current_time.hour % 2 == 0:
+                for guild in self.bot.guilds:
+                    vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+                    if vc and vc.is_connected():
+                        vc.stop()
+                        await asyncio.sleep(0.5)
+                        vc.play(
+                            discord.FFmpegPCMAudio("sounds/checkin2.mp3"),
+                            after=lambda e: print("done", e),
+                        )
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if not self.greeting_state:
-            return
+        guild_id = str(member.guild.id)
+        settings = await get_guild_settings(self.session, guild_id)
 
+        if settings is None or not settings["voice_greeting"]:
+            return
+        
         async with self._voice_state_lock:  # Lock to ensure consistency
             # User joined a voice channel
             if before.channel is None and after.channel is not None:
