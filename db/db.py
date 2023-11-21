@@ -81,11 +81,10 @@ def create_keyspace_and_tables(session):
         # Create Wishlist Table
         session.execute("""
             CREATE TABLE IF NOT EXISTS wishlists (
-                user_id text,
                 guild_id text,
-                wishlist_items list<text>,
-                PRIMARY KEY (user_id, guild_id)
-                -- Add other fields here
+                app_id text,
+                app_name text,
+                PRIMARY KEY (guild_id, app_id)
             )
             """)
 

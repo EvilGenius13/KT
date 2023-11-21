@@ -26,18 +26,18 @@ KT is a multipurpose discord bot.
 
 
 ### ToDo
-- TODO: voice events timing needs to move to DB
-- TODO: Steam needs to move to DB
 - Ephemeral Messages
   - Add ephemeral messages to all commands
 - Scheduled Events
   - Have KT create events at a set time
 - VoiceEvents
+  - TODO: voice events timing needs to move to DB
   - Add more voice events
   - Add more voice responses
   - Set up recurring time states
   - Allow timezone to be set
 - SteamCommands
+  - TODO: Steam watchlist buttons need to update on add/remove
 - TextCommands
   - Add More Text Commands
 - MusicEvents
@@ -52,6 +52,7 @@ KT is a multipurpose discord bot.
   - Add mod mail events
 - OpenAI
   - Add OpenAI assistant using context about TWS
+
 ### Improvements
 - Set limits for who can change settings
 - Logging
