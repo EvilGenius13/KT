@@ -28,34 +28,8 @@ class WatchlistView(discord.ui.View):
     def __init__(self, watchlist):
         super().__init__()
         for item in watchlist:
-            button = FetchButton(label=item['game_name'], app_id=item['app_id'])
+            button = FetchButton(label=item['app_name'], app_id=item['app_id'])
             self.add_item(button)
-
-
-def save_watchlist(watchlist_data):
-    with open('watchlist.json', 'w') as f:
-        json.dump(watchlist_data, f)
-
-def load_watchlist():
-    try:
-        with open('watchlist.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-
-def add_to_watchlist(watchlist_data, app_id, game_name):
-    watchlist_data.append({
-        'app_id': app_id,
-        'game_name': game_name
-    })
-    save_watchlist(watchlist_data)
-
-def remove_from_watchlist(watchlist_data, app_id):
-    watchlist_data[:] = [item for item in watchlist_data if item['app_id'] != app_id]
-    save_watchlist(watchlist_data)
-
-def is_on_watchlist(watchlist_data, app_id):
-    return any(item['app_id'] == app_id for item in watchlist_data)
 
 class SteamCommands(commands.Cog):
     def __init__(self, bot, session):
@@ -64,6 +38,7 @@ class SteamCommands(commands.Cog):
         
     @commands.command()
     async def steam_fetch(self, ctx, arg):
+        guild_id = str(ctx.guild.id)
         try:
             response = requests.get(
                 f"https://store.steampowered.com/api/appdetails?appids={arg}"
@@ -71,7 +46,7 @@ class SteamCommands(commands.Cog):
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             error_message = f"Error: {e}"
-            await ctx.send(error_message)  # Corrected to ctx.send instead of self.send
+            await ctx.send(error_message)
             return
 
         data = response.json()
@@ -108,8 +83,8 @@ class SteamCommands(commands.Cog):
             embed.add_field(name="Current Price", value=final_formatted, inline=True)
             embed.add_field(name="Discount", value=f"**{discount}%**", inline=True)
 
-            watchlist_data = load_watchlist()
-            on_watchlist = is_on_watchlist(watchlist_data, arg)
+            watchlist_data = self._load_watchlist(guild_id)
+            on_watchlist = self._is_on_watchlist(guild_id, arg)
             button_label = "Remove from Watchlist" if on_watchlist else "Add to Watchlist"
             button_style = discord.ButtonStyle.red if on_watchlist else discord.ButtonStyle.green
             button = discord.ui.Button(
@@ -125,10 +100,10 @@ class SteamCommands(commands.Cog):
                     )
             async def button_callback(interaction: discord.Interaction):
                 if on_watchlist:
-                    remove_from_watchlist(watchlist_data, arg)
+                    self._remove_from_watchlist(guild_id, arg)
                     await interaction.response.send_message("Removed from Watchlist!")
                 else:
-                    add_to_watchlist(watchlist_data, arg, game_name)
+                    self._add_to_watchlist(guild_id, arg, game_name)
                     await interaction.response.send_message("Added to Watchlist!")
 
             button.callback = button_callback
@@ -147,7 +122,8 @@ class SteamCommands(commands.Cog):
 
     @commands.command()
     async def watchlist(self, ctx):
-        watchlist = load_watchlist()
+        guild_id = str(ctx.guild.id)
+        watchlist = self._load_watchlist(guild_id)
 
         if not watchlist:
             await ctx.send('Watchlist is empty')
@@ -156,3 +132,38 @@ class SteamCommands(commands.Cog):
         view = WatchlistView(watchlist)
         await ctx.send(view=view)
     
+    def _load_watchlist(self, guild_id):
+        try: 
+            query = "SELECT app_id, app_name FROM wishlists WHERE guild_id = %s"
+            rows = self.session.execute(query, [guild_id])
+            watchlist = [{'app_id': row.app_id, 'app_name': row.app_name} for row in rows]
+            return watchlist
+        except Exception as e:
+            print(f"Error in _load_watchlist: {e}")
+            return []
+        
+    def _add_to_watchlist(self, guild_id, app_id, game_name):
+        try:
+            query = """
+            INSERT INTO wishlists (guild_id, app_id, app_name)
+            VALUES (%s, %s, %s)
+            """
+            self.session.execute(query, (guild_id, app_id, game_name))
+        except Exception as e:
+            print(f"Error adding to watchlist: {e}")
+
+    def _remove_from_watchlist(self, guild_id, app_id):
+        try:
+            query = "DELETE FROM wishlists WHERE guild_id = %s AND app_id = %s"
+            self.session.execute(query, (guild_id, app_id))
+        except Exception as e:
+            print(f"Error removing from watchlist: {e}")
+
+    def _is_on_watchlist(self, guild_id, app_id):
+        try:
+            query = "SELECT app_id FROM wishlists WHERE guild_id = %s AND app_id = %s"
+            row = self.session.execute(query, (guild_id, app_id)).one()
+            return row is not None
+        except Exception as e:
+            print(f"Error checking watchlist: {e}")
+            return False
