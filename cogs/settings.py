@@ -1,8 +1,11 @@
 import discord
 from discord.ext import commands
 from discord.ui import Button, View
+import os
 from db.db import get_guild_settings, update_guild_settings
+from telemetry.axiom_setup import AxiomHelper
 
+axiom = AxiomHelper()
 class Settings(commands.Cog):
     def __init__(self, bot, voice_events_cog, session):
         self.bot = bot
@@ -22,10 +25,12 @@ class Settings(commands.Cog):
             if result.one():
                 # Guild is already registered
                 await ctx.send(f"Your guild, {guild_name}, is already registered.")
+                axiom.send_event([{"type": "registration", "status": "already_registered", "guild_id": guild_id, "guild_name": guild_name}])
                 return
+            else:
+                axiom.send_event([{"type": "registration", "status": "success", "guild_id": guild_id, "guild_name": guild_name}])
         except Exception as e:
-            await ctx.send(f"Error checking registration for {guild_name}: {e}")
-            return
+            raise
         
         # Register guild if not already registered
         try:

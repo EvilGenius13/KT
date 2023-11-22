@@ -3,7 +3,7 @@ from discord.ext import commands
 import yt_dlp
 import asyncio
 import os
-
+from telemetry.tracing_setup import tracer
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -52,44 +52,45 @@ class Music(commands.Cog):
     
     @commands.command(name='play', help='Plays a song from YouTube')
     async def play(self, ctx, *, url):
-        author = ctx.message.author
-        if not author.voice:
-            await ctx.send("You are not connected to a voice channel.")
-            return
+        with tracer.start_as_current_span("play_music_command"):
+            author = ctx.message.author
+            if not author.voice:
+                await ctx.send("You are not connected to a voice channel.")
+                return
 
-        channel = author.voice.channel
-        vc = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+            channel = author.voice.channel
+            vc = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
-        if not vc:
-            vc = await channel.connect()
+            if not vc:
+                vc = await channel.connect()
 
-        # Now `vc` is defined, and we can safely check if it's playing or paused
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'outtmpl': self.get_full_path('downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s'),
-        }
+            # Now `vc` is defined, and we can safely check if it's playing or paused
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                'outtmpl': self.get_full_path('downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s'),
+            }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            # Explicitly set the filename to the .mp3 version
-            filename = ydl.prepare_filename(info).replace('.webm', '.mp3')
-            
-            # Add song to queue
-            queue = self.get_guild_queue(ctx.guild)
-            queue.append({'filename': filename, 'channel': channel})
-            print(f"Added {filename} to queue for {ctx.guild.name}")
-            
-            # If a song is not currently playing, start playing
-            if not vc.is_playing() and not vc.is_paused():
-                await ctx.send("DJ KT is on the decks!")
-                await self.play_next_in_queue(ctx.guild)
-            else:
-                await ctx.send("Song added to the queue.")
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                # Explicitly set the filename to the .mp3 version
+                filename = ydl.prepare_filename(info).replace('.webm', '.mp3')
+                
+                # Add song to queue
+                queue = self.get_guild_queue(ctx.guild)
+                queue.append({'filename': filename, 'channel': channel})
+                print(f"Added {filename} to queue for {ctx.guild.name}")
+                
+                # If a song is not currently playing, start playing
+                if not vc.is_playing() and not vc.is_paused():
+                    await ctx.send("DJ KT is on the decks!")
+                    await self.play_next_in_queue(ctx.guild)
+                else:
+                    await ctx.send("Song added to the queue.")
 
     @commands.command(name='pause', help='Pauses the currently playing song')
     async def pause(self, ctx):
