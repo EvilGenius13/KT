@@ -38,25 +38,24 @@ if os.getenv('LOCAL_ENV') == 'true':
 # Add local version with no await
 @bot.event
 async def on_ready():
-    # Boot up the database connection
-    session = setup_db_connection()
-    
-    # Initiate cog objects
-    await bot.add_cog(TextCommands(bot))
-    await bot.add_cog(SteamCommands(bot, session))
-    await bot.add_cog(VoiceEvents(bot, session))
-    await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
-    await bot.add_cog(Music(bot))
+    with tracer.start_as_current_span("initial_boot_time"):
+        # Boot up the database connection
+        session = setup_db_connection()
+        
+        # Initiate cog objects
+        await bot.add_cog(TextCommands(bot))
+        await bot.add_cog(SteamCommands(bot, session))
+        await bot.add_cog(VoiceEvents(bot, session))
+        await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
+        await bot.add_cog(Music(bot))
 
-    end_time = time.time()
-    boot_time = end_time - start_time
+        end_time = time.time()
+        boot_time = end_time - start_time
 
-    data = [{"type": "boot_time", "value": boot_time}]
-    axiom.send_event(data)
-    
-    print("KT is online")
-    # with tracer.start_as_current_span("foo"):
-    #     print("Axiom, tracing!")
+        data = [{"type": "boot_time", "value": boot_time}]
+        axiom.send_event(data)
+        
+        print("KT is online")
 
 
 @bot.event
