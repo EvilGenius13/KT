@@ -26,9 +26,6 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 if DISCORD_TOKEN is None:
     raise ValueError("No DISCORD_TOKEN found in environment variables")
 
-# Bot Start Timing
-start_time = time.time()
-
 # Local Development
 if os.getenv('LOCAL_ENV') == 'true':
     if not discord.opus.is_loaded():
@@ -48,12 +45,6 @@ async def on_ready():
         await bot.add_cog(VoiceEvents(bot, session))
         await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
         await bot.add_cog(Music(bot))
-
-        end_time = time.time()
-        boot_time = end_time - start_time
-
-        data = [{"type": "boot_time", "value": boot_time}]
-        axiom.send_event(data)
         
         print("KT is online")
 
