@@ -21,6 +21,7 @@ services:
       - scylla
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - AXIOM_KEY=${AXIOM_KEY}
     deploy:
       replicas: 1
       resources:
