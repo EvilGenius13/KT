@@ -56,7 +56,7 @@ KT is a multipurpose discord bot.
 ### Improvements
 - Set limits for who can change settings
 - Logging
-  - TODO: Add logging for more functions such as watchlist adding/removing
+  - TODO: More logging may be needed on other commands
   - BUG: Can't add tracing due to 404?
 - Spans and timing for functions
 

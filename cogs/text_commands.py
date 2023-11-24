@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+from telemetry.axiom_setup import AxiomHelper
+
+axiom = AxiomHelper()
 
 class TextCommands(commands.Cog):
   def __init__(self, bot):
@@ -8,6 +11,8 @@ class TextCommands(commands.Cog):
   @commands.command()
   async def hello(self, ctx):
     user = ctx.message.author
+    data = [{"type": "command", "value": "hello_message"}]
+    axiom.send_event(data)
     await ctx.send(f'Hey {user.mention}')
   
   @commands.command()

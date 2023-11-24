@@ -54,14 +54,14 @@ class Music(commands.Cog):
     async def play(self, ctx, *, url):
         with tracer.start_as_current_span("play_music_command", attributes={"type": "command"}):
             # Span for voice channel checks
-            with tracer.start_as_current_span("check_voice_channel"):
+            with tracer.start_as_current_span("check_voice_channel", attributes={"operation": "discord"}):
                 author = ctx.message.author
                 if not author.voice:
                     await ctx.send("You are not connected to a voice channel.")
                     return
 
             # Span for connecting to the voice channel
-            with tracer.start_as_current_span("connect_to_voice"):
+            with tracer.start_as_current_span("connect_to_voice", attributes={"operation": "discord"}):
                 channel = author.voice.channel
                 vc = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
                 if not vc:
@@ -69,7 +69,7 @@ class Music(commands.Cog):
 
 
             # Now `vc` is defined, and we can safely check if it's playing or paused
-            with tracer.start_as_current_span("process_and_add_song"):
+            with tracer.start_as_current_span("process_and_add_song", attributes={"operation": "http_request", "service": "YouTube"}):
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'postprocessors': [{
@@ -90,7 +90,7 @@ class Music(commands.Cog):
                     queue.append({'filename': filename, 'channel': channel})
                     print(f"Added {filename} to queue for {ctx.guild.name}")
                 
-            with tracer.start_as_current_span("play_music"):
+            with tracer.start_as_current_span("play_music", attributes={"operation": "discord"}):
                 # If a song is not currently playing, start playing
                 if not vc.is_playing() and not vc.is_paused():
                     await ctx.send("DJ KT is on the decks!")
