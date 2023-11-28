@@ -91,6 +91,7 @@ class SteamCommands(commands.Cog):
                 embed.set_image(url=header_image)
                 embed.add_field(name="Current Price", value=final_formatted, inline=True)
                 embed.add_field(name="Discount", value=f"**{discount}%**", inline=True)
+                embed.set_thumbnail(url="https://i.postimg.cc/3R4fnw0x/twsgirl.png")
             
             with tracer.start_as_current_span("load_watchlist"):
                 watchlist_data = self._load_watchlist(guild_id)
