@@ -45,6 +45,7 @@ async def on_ready():
         await bot.add_cog(VoiceEvents(bot, session))
         await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
         await bot.add_cog(Music(bot))
+        await bot.tree.sync()
         
         print("KT is online")
 
@@ -64,5 +65,9 @@ async def on_command_error(ctx, error):
     axiom.send_event(error_data)
 
     await ctx.send(f"An error occurred: {str(error)}")
+
+@bot.tree.command(name="ping")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong!")
 
 bot.run(DISCORD_TOKEN)
