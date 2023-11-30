@@ -3,8 +3,10 @@ from discord.ext import commands, tasks
 import datetime
 import pytz
 import random
+import os
 import asyncio
 from db.db import get_guild_settings
+from google.cloud import texttospeech
 
 
 class VoiceEvents(commands.Cog):
@@ -12,6 +14,18 @@ class VoiceEvents(commands.Cog):
         self.bot = bot
         self._voice_state_lock = asyncio.Lock()
         self.session = session
+        self.greetings = [
+            "Hey {username}, great to see you here!",
+            "Hello {username}, welcome to the channel!",
+            "Greetings, {username}! Hope you're doing well today.",
+            "Hi there, {username}! Ready for some fun?",
+            "{username}, you've joined us! Fantastic to have you here.",
+            "Welcome aboard, {username}! Let's make this a great day.",
+            "Good to see you, {username}! We've been expecting you.",
+            "Ah, {username}, you've arrived! Let the adventure begin.",
+            "Hello {username}, thrilled to have you join us today!",
+            "Hi {username}, welcome! Looking forward to chatting with you."
+        ]
         self.intro_greetings = [
             "sounds/hey.mp3",
             "sounds/howdy.mp3",
@@ -51,6 +65,50 @@ class VoiceEvents(commands.Cog):
     def cog_unload(self):
         self.schedule_break.cancel()  # Cancel the looping task when the cog is unloaded
         self.break_time.cancel()
+
+    async def play_greeting(self, voice_client, text):
+        # Initialize the Text-to-Speech client
+        tts_client = texttospeech.TextToSpeechClient()
+
+        # Set the text input to be synthesized
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+
+        # Build the voice request, select the language code and the SSML voice gender
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Studio-O",
+            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        )
+
+        # Select the type of audio file you want returned
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+
+        # Perform the text-to-speech request
+        response = tts_client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+
+        # Save the response to an MP3 file
+        tts_filename = "sounds/tts-return.mp3"
+        with open(tts_filename, "wb") as out:
+            out.write(response.audio_content)
+
+        # Define an 'after' callback function to delete the file
+        def after_playing(error):
+            print("TTS playback finished:", error)
+            try:
+                os.remove(tts_filename)  # Delete the file
+            except OSError as e:
+                print(f"Error deleting file {tts_filename}: {e}")
+
+        # Play the generated MP3 file in the voice channel
+        voice_client.play(
+            discord.FFmpegPCMAudio(tts_filename),
+            after=after_playing
+        )
+
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def schedule_break(self):
@@ -106,6 +164,7 @@ class VoiceEvents(commands.Cog):
     async def on_voice_state_update(self, member, before, after):
         guild_id = str(member.guild.id)
         settings = await get_guild_settings(self.session, guild_id)
+        greeting_text = random.choice(self.greetings).format(username=member.name)
 
         if settings is None or not settings["voice_greeting"]:
             return
@@ -121,30 +180,14 @@ class VoiceEvents(commands.Cog):
                 # Check if bot is already playing audio
                 if not vc.is_playing():
                     # Bot is not playing audio, so play a greeting
-                    random_intro = random.choice(self.intro_greetings)
-                    vc.play(
-                        discord.FFmpegPCMAudio(random_intro),
-                        after=lambda e: print("done", e),
-                    )
+                    await self.play_greeting(vc, greeting_text)
                 else:
                     # Bot is already playing audio. Decide if you want to queue here.
                     print(f"Skipped greeting for {member} as audio is already playing.")
-
-            # User switched from one channel to another
-            elif before.channel is not None and after.channel is not None and before.channel != after.channel:
-                # Handle channel switch if necessary
-                pass
-
-            # User left a voice channel
+        
             elif before.channel is not None and after.channel is None:
-                # Check if bot is the only one left
-                if len(before.channel.members) == 1:
-                    # Bot is alone in the voice channel, disconnect
-                    vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
-                    if vc:
-                        await vc.disconnect()
-                        await self.bot.change_presence(activity=None)
-            else:
-                # This is likely a mute/unmute or deafen/undeafen event, do nothing
-                pass
+                vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                if vc and len(before.channel.members) == 1:  # Check if bot is alone
+                    await vc.disconnect()
+                    print(f"Disconnected from voice channel in guild {member.guild.name}")
 

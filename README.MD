@@ -58,6 +58,7 @@ KT is a multipurpose discord bot.
 - Logging
   - TODO: More logging may be needed on other commands
   - BUG: Can't add tracing due to 404?
+  - TODO: Log different datasets based on local/dev/prod
 - Spans and timing for functions
 
 ### Bugs
