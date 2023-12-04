@@ -27,7 +27,10 @@ async def get_guild_settings(session, guild_id):
     dict: A dictionary containing the settings, or None if the guild is not found.
     """
 
-    query = "SELECT voice_greeting, voice_break_time, voice_schedule_break FROM bot_keyspace.guilds WHERE guild_id = %s"
+    query = """
+    SELECT voice_greeting, voice_break_time, voice_schedule_break, break_hours, break_minutes, time_zone
+    FROM bot_keyspace.guilds WHERE guild_id = %s"""
+
     result = session.execute(query, [guild_id])
     row = result.one()
     if row:
@@ -35,6 +38,9 @@ async def get_guild_settings(session, guild_id):
             "voice_greeting": row.voice_greeting,
             "voice_break_time": row.voice_break_time,
             "voice_schedule_break": row.voice_schedule_break,
+            "break_hours": row.break_hours,
+            "break_minutes": row.break_minutes,
+            "time_zone": row.time_zone,
         }
     else:
         return None
@@ -50,10 +56,18 @@ async def update_guild_settings(session, guild_id, settings):
     """
     query = """
     UPDATE bot_keyspace.guilds 
-    SET voice_greeting = %s, voice_break_time = %s, voice_schedule_break = %s
+    SET voice_greeting = %s, voice_break_time = %s, voice_schedule_break = %s, time_zone = %s, break_hours = %s, break_minutes = %s
     WHERE guild_id = %s
     """
-    values = (settings['voice_greeting'], settings['voice_break_time'], settings['voice_schedule_break'], guild_id)
+    values = (
+        settings['voice_greeting'], 
+        settings['voice_break_time'], 
+        settings['voice_schedule_break'],
+        settings['time_zone'],
+        settings['break_hours'],
+        settings['break_minutes'],
+        guild_id
+    )
     session.execute(query, values)
     
 def create_keyspace_and_tables(session):
@@ -74,7 +88,10 @@ def create_keyspace_and_tables(session):
                 guild_name text,
                 voice_greeting boolean,
                 voice_break_time boolean,
-                voice_schedule_break boolean
+                voice_schedule_break boolean,
+                break_hours int,
+                break_minutes int,
+                time_zone text
             )
             """)
 

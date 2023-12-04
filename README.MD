@@ -27,13 +27,11 @@ KT is a multipurpose discord bot.
 
 ### ToDo
 - Ephemeral Messages
-  - Add ephemeral messages to all commands
+  - Change setting messages to be ephemeral.
 - Scheduled Events
   - Have KT create events at a set time
 - VoiceEvents
   - TODO: voice events timing needs to move to DB
-  - Add more voice events
-  - Add more voice responses
   - Set up recurring time states
   - Allow timezone to be set
 - SteamCommands
@@ -57,8 +55,7 @@ KT is a multipurpose discord bot.
 - Set limits for who can change settings
 - Logging
   - TODO: More logging may be needed on other commands
-  - BUG: Can't add tracing due to 404?
-  - TODO: Log different datasets based on local/dev/prod
+  - TODO: Need spans on new voice events
 - Spans and timing for functions
 
 ### Bugs

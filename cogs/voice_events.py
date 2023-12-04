@@ -7,6 +7,7 @@ import os
 import asyncio
 from db.db import get_guild_settings
 from google.cloud import texttospeech
+import uuid
 
 
 class VoiceEvents(commands.Cog):
@@ -14,6 +15,7 @@ class VoiceEvents(commands.Cog):
         self.bot = bot
         self._voice_state_lock = asyncio.Lock()
         self.session = session
+        self.guild_settings_cache = {}
         self.greetings = [
             "Hey {username}, great to see you here!",
             "Hello {username}, welcome to the channel!",
@@ -26,45 +28,32 @@ class VoiceEvents(commands.Cog):
             "Hello {username}, thrilled to have you join us today!",
             "Hi {username}, welcome! Looking forward to chatting with you."
         ]
-        self.intro_greetings = [
-            "sounds/hey.mp3",
-            "sounds/howdy.mp3",
-            "sounds/welcome.mp3",
-            "sounds/whatsup.mp3",
+        self.break_messages = [
+            "Hey everyone, KT here. Time to get up, stretch your legs, and maybe grab a snack!",
+            "Hello all, this is KT reminding you to take a short break. A quick walk or some fresh air can be really refreshing.",
+            "Hi everyone, it's KT! Don't forget to rest your eyes, move around a bit, and stay hydrated."
         ]
-        #Setting up states
-        self._current_hours = 0
-        self._current_minutes = 0
+        self.scheduled_break_messages = [
+            "Attention everyone, it's time for our scheduled break. Let's take a moment to step away, relax, and recharge. We'll be back in action soon!"
+        ]
         
         # Start the looping tasks
         self.schedule_break.start()  # Start the looping tasks
         self.break_time.start()
 
-    @property
-    def current_hours(self):
-        return self._current_hours
-
-    @current_hours.setter
-    def current_hours(self, value):
-        if 0 <= value < 24:
-            self._current_hours = value
-        else:
-            raise ValueError("Hours must be between 0 and 23")
-    
-    @property
-    def current_minutes(self):
-        return self._current_minutes
-    
-    @current_minutes.setter
-    def current_minutes(self, value):
-        if 0 <= value < 60:
-            self._current_minutes = value
-        else:
-            raise ValueError("Minutes must be between 0 and 59")
-
     def cog_unload(self):
         self.schedule_break.cancel()  # Cancel the looping task when the cog is unloaded
         self.break_time.cancel()
+
+    async def get_cached_guild_settings(self, guild_id):
+        if guild_id in self.guild_settings_cache:
+            # If settings not in cache, load from DB and cache them
+            settings = await get_guild_settings(self.session, guild_id)
+            if settings:
+                self.guild_settings_cache[guild_id] = settings
+            else:
+                return None
+        return self.guild_settings_cache[guild_id]
 
     async def play_greeting(self, voice_client, text):
         # Initialize the Text-to-Speech client
@@ -91,7 +80,7 @@ class VoiceEvents(commands.Cog):
         )
 
         # Save the response to an MP3 file
-        tts_filename = "sounds/tts-return.mp3"
+        tts_filename = f"sounds/tts-{uuid.uuid4()}.mp3"
         with open(tts_filename, "wb") as out:
             out.write(response.audio_content)
 
@@ -112,58 +101,46 @@ class VoiceEvents(commands.Cog):
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def schedule_break(self):
-        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
         for guild in self.bot.guilds:
             guild_id = str(guild.id)
-            settings = await get_guild_settings(self.session, guild_id)
+            settings = await self.get_cached_guild_settings(guild_id)
 
             if settings is None or not settings["voice_schedule_break"]:
                 return
             
-
-            if current_time.hour == self.current_hours and current_time.minute == self.current_minutes:
-                for guild in self.bot.guilds:  # Check all guilds the bot is connected to
-                    vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-                    if (
-                        vc and vc.is_connected()
-                    ):  # If the bot is connected to a voice channel in this guild
-                        vc.stop()  # Stop any currently playing audio
-                        await asyncio.sleep(
-                            0.5
-                        )  # Optional: wait for half a second before playing the new audio
-                        vc.play(
-                            discord.FFmpegPCMAudio("sounds/checkin.mp3"),
-                            after=lambda e: print("done", e),
-                        )
+            current_time = datetime.datetime.now(pytz.timezone(settings['time_zone']))
+            if current_time.hour == settings['break_hours'] and current_time.minute == settings['break_minutes']:
+                vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+                if (vc and vc.is_connected()):  # If the bot is connected to a voice channel in this guild
+                    vc.stop()  # Stop any currently playing audio
+                    await asyncio.sleep(0.5)
+                    scheduled_break_text = random.choice(self.scheduled_break_messages)
+                    await self.play_greeting(vc, scheduled_break_text)
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def break_time(self):
-        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        
         for guild in self.bot.guilds:
             guild_id = str(guild.id)
-            settings = await get_guild_settings(self.session, guild_id)
+            settings = await self.get_cached_guild_settings(guild_id)
 
             if settings is None or not settings["voice_schedule_break"]:
                 return
             
             
+            current_time = datetime.datetime.now(pytz.timezone(settings['time_zone']))
             # if current_time.minute % 5 == 0:  # If the current minute is a multiple of 5 **FOR TESTING PURPOSES**
             if current_time.minute == 0 and current_time.hour % 2 == 0:
-                for guild in self.bot.guilds:
-                    vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-                    if vc and vc.is_connected():
-                        vc.stop()
-                        await asyncio.sleep(0.5)
-                        vc.play(
-                            discord.FFmpegPCMAudio("sounds/checkin2.mp3"),
-                            after=lambda e: print("done", e),
-                        )
+                vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+                if vc and vc.is_connected():
+                    vc.stop()
+                    await asyncio.sleep(0.5)
+                    break_text = random.choice(self.break_messages)
+                    await self.play_greeting(vc, break_text)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         guild_id = str(member.guild.id)
-        settings = await get_guild_settings(self.session, guild_id)
+        settings = await self.get_cached_guild_settings(guild_id)
         greeting_text = random.choice(self.greetings).format(username=member.name)
 
         if settings is None or not settings["voice_greeting"]:

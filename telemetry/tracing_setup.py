@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 AXIOM_TRACE_KEY = os.getenv("AXIOM_TRACE_KEY")
+AXIOM_DATASET = os.getenv("AXIOM_DATASET")
 
 # Define the service name resource
 resource = Resource(attributes={
@@ -23,7 +24,7 @@ otlp_exporter = OTLPSpanExporter(
     endpoint="https://api.axiom.co/v1/traces",
     headers={
         "Authorization": f"Bearer {AXIOM_TRACE_KEY}",
-        "X-Axiom-Dataset": "kt"  # Add your dataset here
+        "X-Axiom-Dataset": AXIOM_DATASET  # Add your dataset here
     }
 )
 
