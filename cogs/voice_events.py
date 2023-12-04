@@ -7,6 +7,7 @@ import os
 import asyncio
 from db.db import get_guild_settings
 from google.cloud import texttospeech
+import uuid
 
 
 class VoiceEvents(commands.Cog):
@@ -26,15 +27,18 @@ class VoiceEvents(commands.Cog):
             "Hello {username}, thrilled to have you join us today!",
             "Hi {username}, welcome! Looking forward to chatting with you."
         ]
-        self.intro_greetings = [
-            "sounds/hey.mp3",
-            "sounds/howdy.mp3",
-            "sounds/welcome.mp3",
-            "sounds/whatsup.mp3",
+        self.break_messages = [
+            "Hey everyone, KT here. Time to get up, stretch your legs, and maybe grab a snack!",
+            "Hello all, this is KT reminding you to take a short break. A quick walk or some fresh air can be really refreshing.",
+            "Hi everyone, it's KT! Don't forget to rest your eyes, move around a bit, and stay hydrated."
+        ]
+        self.scheduled_break_messages = [
+            "Attention everyone, it's time for our scheduled break. Let's take a moment to step away, relax, and recharge. We'll be back in action soon!"
         ]
         #Setting up states
-        self._current_hours = 0
-        self._current_minutes = 0
+        self._current_hours = 14
+        self._current_minutes = 10
+        self._time_zone = "US/Eastern"
         
         # Start the looping tasks
         self.schedule_break.start()  # Start the looping tasks
@@ -91,7 +95,7 @@ class VoiceEvents(commands.Cog):
         )
 
         # Save the response to an MP3 file
-        tts_filename = "sounds/tts-return.mp3"
+        tts_filename = f"sounds/tts-{uuid.uuid4()}.mp3"
         with open(tts_filename, "wb") as out:
             out.write(response.audio_content)
 
@@ -112,7 +116,8 @@ class VoiceEvents(commands.Cog):
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def schedule_break(self):
-        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        current_time = datetime.datetime.now(pytz.timezone(self._time_zone))
+        scheduled_break_text = random.choice(self.scheduled_break_messages)
         for guild in self.bot.guilds:
             guild_id = str(guild.id)
             settings = await get_guild_settings(self.session, guild_id)
@@ -124,21 +129,15 @@ class VoiceEvents(commands.Cog):
             if current_time.hour == self.current_hours and current_time.minute == self.current_minutes:
                 for guild in self.bot.guilds:  # Check all guilds the bot is connected to
                     vc = discord.utils.get(self.bot.voice_clients, guild=guild)
-                    if (
-                        vc and vc.is_connected()
-                    ):  # If the bot is connected to a voice channel in this guild
+                    if (vc and vc.is_connected()):  # If the bot is connected to a voice channel in this guild
                         vc.stop()  # Stop any currently playing audio
-                        await asyncio.sleep(
-                            0.5
-                        )  # Optional: wait for half a second before playing the new audio
-                        vc.play(
-                            discord.FFmpegPCMAudio("sounds/checkin.mp3"),
-                            after=lambda e: print("done", e),
-                        )
+                        await asyncio.sleep(0.5)
+                        await self.play_greeting(vc, scheduled_break_text)
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def break_time(self):
-        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        current_time = datetime.datetime.now(pytz.timezone(self._time_zone))
+        break_text = random.choice(self.break_messages)
         
         for guild in self.bot.guilds:
             guild_id = str(guild.id)
@@ -148,17 +147,14 @@ class VoiceEvents(commands.Cog):
                 return
             
             
-            # if current_time.minute % 5 == 0:  # If the current minute is a multiple of 5 **FOR TESTING PURPOSES**
-            if current_time.minute == 0 and current_time.hour % 2 == 0:
+            if current_time.minute % 5 == 0:  # If the current minute is a multiple of 5 **FOR TESTING PURPOSES**
+            # if current_time.minute == 0 and current_time.hour % 2 == 0:
                 for guild in self.bot.guilds:
                     vc = discord.utils.get(self.bot.voice_clients, guild=guild)
                     if vc and vc.is_connected():
                         vc.stop()
                         await asyncio.sleep(0.5)
-                        vc.play(
-                            discord.FFmpegPCMAudio("sounds/checkin2.mp3"),
-                            after=lambda e: print("done", e),
-                        )
+                        await self.play_greeting(vc, break_text)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):

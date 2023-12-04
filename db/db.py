@@ -74,7 +74,10 @@ def create_keyspace_and_tables(session):
                 guild_name text,
                 voice_greeting boolean,
                 voice_break_time boolean,
-                voice_schedule_break boolean
+                voice_schedule_break boolean,
+                break_hours int,
+                break_minutes int,
+                time_zone text
             )
             """)
 

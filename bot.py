@@ -35,7 +35,7 @@ if os.getenv('LOCAL_ENV') == 'true':
 # Add local version with no await
 @bot.event
 async def on_ready():
-    with tracer.start_as_current_span("initial_boot_time"):
+    with tracer.start_as_current_span("initial_boot_time", {"type": "boot_time"}):
         # Boot up the database connection
         session = setup_db_connection()
         
