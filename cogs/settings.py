@@ -6,6 +6,23 @@ from db.db import get_guild_settings, update_guild_settings
 from telemetry.axiom_setup import AxiomHelper
 
 axiom = AxiomHelper()
+class TimezoneDropdown(discord.ui.Select):
+    def __init__(self, session, current_timezone):
+        self.session = session
+        options = [
+            discord.SelectOption(label="US/Eastern", value="US/Eastern"),
+            discord.SelectOption(label="US/Pacific", value="US/Pacific"),
+            discord.SelectOption(label="UTC", value="UTC")
+        ]
+        super().__init__(placeholder=current_timezone, min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        guild_id = str(interaction.guild.id)
+        settings = await get_guild_settings(self.session, guild_id)  # Use the session instance variable
+        settings['time_zone'] = self.values[0]
+        await update_guild_settings(self.session, guild_id, settings)
+        await interaction.response.send_message(f"Timezone set to {self.values[0]}", ephemeral=True)
+
 class Settings(commands.Cog):
     def __init__(self, bot, voice_events_cog, session):
         self.bot = bot
@@ -40,10 +57,13 @@ class Settings(commands.Cog):
                     guild_name, 
                     voice_greeting,
                     voice_break_time,
-                    voice_schedule_break
+                    voice_schedule_break,
+                    break_hours,
+                    break_minutes,
+                    time_zone
                 )
-                VALUES (%s, %s, %s, %s, %s)
-                """, (guild_id, guild_name, False, False, False))
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (guild_id, guild_name, False, False, False, 0, 0, "US/Eastern")) # Change to UTC after testing
             await ctx.send(f"Registered {guild_name} successfully.")
         except Exception as e:
             await ctx.send(f"Error registering {guild_name}: {e}")
@@ -98,6 +118,9 @@ class Settings(commands.Cog):
                 # Update the settings in the database
                 await update_guild_settings(self.session, guild_id, current_settings)
 
+                # Update the cache in the VoiceEvents cog
+                self.voice_events_cog.guild_settings_cache[guild_id] = current_settings
+
                 # Update button labels and styles
                 for btn in view.children:
                     if btn.custom_id == custom_id:
@@ -117,6 +140,10 @@ class Settings(commands.Cog):
         view.add_item(button)
         view.add_item(button2)
         view.add_item(button3)
+        
+        current_timezone = settings.get('time_zone', 'US/Eastern')
+        timezone_dropdown = TimezoneDropdown(self.session, current_timezone)
+        view.add_item(timezone_dropdown)
 
         await ctx.send("Click the button to toggle voice settings.", view=view)
 
@@ -124,15 +151,24 @@ class Settings(commands.Cog):
     async def set_scheduled_break(self, ctx, arg):
         try:
             hours, minutes = map(int, arg.split(":"))
-            self.voice_events_cog.current_hours = hours
-            self.voice_events_cog.current_minutes = minutes
-            await ctx.send(
-                f"Set scheduled break to {hours}:{minutes}. This will take effect in the next minute."
-            )
+            if not (0 <= hours < 24) or not (0 <= minutes < 60):
+                raise ValueError("Hours must be between 0 and 23 and minutes must be between 0 and 59")
+
+            guild_id = str(ctx.guild.id)
+            settings = await get_guild_settings(self.session, guild_id)
+            if settings is None:
+                await ctx.send("Guild settings not found. Please register your guild first.")
+                return
+
+            settings['break_hours'] = hours
+            settings['break_minutes'] = minutes
+            await update_guild_settings(self.session, guild_id, settings)
+
+             # Update the cache in the VoiceEvents cog
+            self.voice_events_cog.guild_settings_cache[guild_id] = settings
+
+            await ctx.send(f"Set scheduled break to {hours}:{minutes}. This will take effect based on the bot's internal schedule.")
         except ValueError as e:
-            if 'Hours must be between 0 and 23' in str(e) or 'Minutes must be between 0 and 59' in str(e):
-                await ctx.send(str(e))
-            else:
-                await ctx.send("Invalid time format. Please use HH:MM format.")
+            await ctx.send(str(e))
         except Exception as e:
-            await ctx.send("An error occurred while setting the scheduled break time.")
+            await ctx.send(f"An error occurred while setting the scheduled break time: {e}")
