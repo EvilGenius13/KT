@@ -1,1 +1,0 @@
-# This is for the bot creating scheduled events (like game nights, etc.)
