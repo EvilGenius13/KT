@@ -46,14 +46,11 @@ class VoiceEvents(commands.Cog):
         self.break_time.cancel()
 
     async def get_cached_guild_settings(self, guild_id):
-        if guild_id in self.guild_settings_cache:
-            # If settings not in cache, load from DB and cache them
-            settings = await get_guild_settings(self.session, guild_id)
-            if settings:
-                self.guild_settings_cache[guild_id] = settings
-            else:
-                return None
-        return self.guild_settings_cache[guild_id]
+    if guild_id not in self.guild_settings_cache:
+        settings = await get_guild_settings(self.session, guild_id)
+        # Even if settings are not found, store a default or None to avoid repeated DB queries
+        self.guild_settings_cache[guild_id] = settings if settings else None
+    return self.guild_settings_cache[guild_id]
 
     async def play_greeting(self, voice_client, text):
         # Initialize the Text-to-Speech client
@@ -106,7 +103,7 @@ class VoiceEvents(commands.Cog):
             settings = await self.get_cached_guild_settings(guild_id)
 
             if settings is None or not settings["voice_schedule_break"]:
-                return
+                continue
             
             current_time = datetime.datetime.now(pytz.timezone(settings['time_zone']))
             if current_time.hour == settings['break_hours'] and current_time.minute == settings['break_minutes']:
@@ -124,7 +121,7 @@ class VoiceEvents(commands.Cog):
             settings = await self.get_cached_guild_settings(guild_id)
 
             if settings is None or not settings["voice_schedule_break"]:
-                return
+                continue
             
             
             current_time = datetime.datetime.now(pytz.timezone(settings['time_zone']))
