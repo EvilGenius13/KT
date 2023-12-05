@@ -46,11 +46,11 @@ class VoiceEvents(commands.Cog):
         self.break_time.cancel()
 
     async def get_cached_guild_settings(self, guild_id):
-    if guild_id not in self.guild_settings_cache:
-        settings = await get_guild_settings(self.session, guild_id)
-        # Even if settings are not found, store a default or None to avoid repeated DB queries
-        self.guild_settings_cache[guild_id] = settings if settings else None
-    return self.guild_settings_cache[guild_id]
+        if guild_id not in self.guild_settings_cache:
+            settings = await get_guild_settings(self.session, guild_id)
+            # Even if settings are not found, store a default or None to avoid repeated DB queries
+            self.guild_settings_cache[guild_id] = settings if settings else None
+        return self.guild_settings_cache[guild_id]
 
     async def play_greeting(self, voice_client, text):
         # Initialize the Text-to-Speech client
