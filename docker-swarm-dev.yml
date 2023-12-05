@@ -22,7 +22,7 @@ services:
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - AXIOM_KEY=${AXIOM_KEY}
-      - AXIOM_TRACING_KEY=${AXIOM_TRACING_KEY}
+      - AXIOM_TRACE_KEY=${AXIOM_TRACING_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
     deploy:
       replicas: 1

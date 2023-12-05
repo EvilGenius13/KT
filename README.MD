@@ -31,9 +31,6 @@ KT is a multipurpose discord bot.
 - Scheduled Events
   - Have KT create events at a set time
 - VoiceEvents
-  - TODO: voice events timing needs to move to DB
-  - Set up recurring time states
-  - Allow timezone to be set
 - SteamCommands
   - TODO: Steam watchlist buttons need to update on add/remove
 - TextCommands
@@ -57,6 +54,7 @@ KT is a multipurpose discord bot.
   - TODO: More logging may be needed on other commands
   - TODO: Need spans on new voice events
 - Spans and timing for functions
+- Do we move caching to something like redis or memcache?
 
 ### Bugs
 - VoiceEvents
