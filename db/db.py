@@ -2,6 +2,7 @@ import os
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -110,19 +111,24 @@ def create_keyspace_and_tables(session):
         print(f"Error creating keyspace and tables: {e}")
 
 def setup_db_connection():
-    # The code to establish a connection and confirm it
-    try:
-        session = cluster.connect()
-        # Confirm connection
-        row = session.execute("SELECT cluster_name FROM system.local").one()
-        if row:
-            print(f"Successfully connected to ScyllaDB cluster: {row.cluster_name}")
-        else:
-            print("Connection to ScyllaDB cluster established, but couldn't retrieve cluster name.")
-    
-        create_keyspace_and_tables(session)
-        return session
-    except Exception as e:
-        print(f"Failed to connect to ScyllaDB: {e}")
-        # You might want to exit the program or handle reconnection here
+    retry_attempts = 5
+    retry_delay = 10  # seconds
+
+    for attempt in range(retry_attempts):
+        try:
+            session = cluster.connect()
+            # Confirm connection
+            row = session.execute("SELECT cluster_name FROM system.local").one()
+            if row:
+                print(f"Successfully connected to ScyllaDB cluster: {row.cluster_name}")
+            else:
+                print("Connection to ScyllaDB cluster established, but couldn't retrieve cluster name.")
+            
+            create_keyspace_and_tables(session)
+            return session
+        except Exception as e:
+            print(f"Connection attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
+    else:
+        raise Exception("Failed to connect to ScyllaDB after multiple attempts.")
 

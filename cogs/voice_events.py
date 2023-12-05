@@ -8,6 +8,7 @@ import asyncio
 from db.db import get_guild_settings
 from google.cloud import texttospeech
 import uuid
+from telemetry.tracing_setup import tracer
 
 
 class VoiceEvents(commands.Cog):
@@ -53,47 +54,50 @@ class VoiceEvents(commands.Cog):
         return self.guild_settings_cache[guild_id]
 
     async def play_greeting(self, voice_client, text):
-        # Initialize the Text-to-Speech client
-        tts_client = texttospeech.TextToSpeechClient()
+        with tracer.start_as_current_span("play_greeting"):
+            with tracer.start_as_current_span("initialize_tts_client"):
+                # Initialize the Text-to-Speech client
+                tts_client = texttospeech.TextToSpeechClient()
 
-        # Set the text input to be synthesized
-        synthesis_input = texttospeech.SynthesisInput(text=text)
+                # Set the text input to be synthesized
+                synthesis_input = texttospeech.SynthesisInput(text=text)
 
-        # Build the voice request, select the language code and the SSML voice gender
-        voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US",
-            name="en-US-Studio-O",
-            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
-        )
+                # Build the voice request, select the language code and the SSML voice gender
+                voice = texttospeech.VoiceSelectionParams(
+                    language_code="en-US",
+                    name="en-US-Studio-O",
+                    ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+                )
 
-        # Select the type of audio file you want returned
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3
-        )
+                # Select the type of audio file you want returned
+                audio_config = texttospeech.AudioConfig(
+                    audio_encoding=texttospeech.AudioEncoding.MP3
+                )
+            with tracer.start_as_current_span("synthesize_speech"):
+                # Perform the text-to-speech request
+                response = tts_client.synthesize_speech(
+                    input=synthesis_input, voice=voice, audio_config=audio_config
+                )
 
-        # Perform the text-to-speech request
-        response = tts_client.synthesize_speech(
-            input=synthesis_input, voice=voice, audio_config=audio_config
-        )
+                # Save the response to an MP3 file
+                tts_filename = f"sounds/tts-{uuid.uuid4()}.mp3"
+                with open(tts_filename, "wb") as out:
+                    out.write(response.audio_content)
 
-        # Save the response to an MP3 file
-        tts_filename = f"sounds/tts-{uuid.uuid4()}.mp3"
-        with open(tts_filename, "wb") as out:
-            out.write(response.audio_content)
+                # Define an 'after' callback function to delete the file
+                def after_playing(error):
+                    print("TTS playback finished:", error)
+                    try:
+                        os.remove(tts_filename)  # Delete the file
+                    except OSError as e:
+                        print(f"Error deleting file {tts_filename}: {e}")
 
-        # Define an 'after' callback function to delete the file
-        def after_playing(error):
-            print("TTS playback finished:", error)
-            try:
-                os.remove(tts_filename)  # Delete the file
-            except OSError as e:
-                print(f"Error deleting file {tts_filename}: {e}")
-
-        # Play the generated MP3 file in the voice channel
-        voice_client.play(
-            discord.FFmpegPCMAudio(tts_filename),
-            after=after_playing
-        )
+            with tracer.start_as_current_span("play_audio"):
+                # Play the generated MP3 file in the voice channel
+                voice_client.play(
+                    discord.FFmpegPCMAudio(tts_filename),
+                    after=after_playing
+                )
 
 
     @tasks.loop(minutes=1)  # Check the time every minute
@@ -136,32 +140,33 @@ class VoiceEvents(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        guild_id = str(member.guild.id)
-        settings = await self.get_cached_guild_settings(guild_id)
-        greeting_text = random.choice(self.greetings).format(username=member.name)
+        with tracer.start_as_current_span("on_voice_state_update"):
+            guild_id = str(member.guild.id)
+            settings = await self.get_cached_guild_settings(guild_id)
+            greeting_text = random.choice(self.greetings).format(username=member.name)
 
-        if settings is None or not settings["voice_greeting"]:
-            return
-        
-        async with self._voice_state_lock:  # Lock to ensure consistency
-            # User joined a voice channel
-            if before.channel is None and after.channel is not None:
-                vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
-                if not vc:
-                    # Bot is not in a channel, so join the user's channel
-                    vc = await after.channel.connect()
+            if settings is None or not settings["voice_greeting"]:
+                return
+            
+            async with self._voice_state_lock:  # Lock to ensure consistency
+                # User joined a voice channel
+                if before.channel is None and after.channel is not None:
+                    vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                    if not vc:
+                        # Bot is not in a channel, so join the user's channel
+                        vc = await after.channel.connect()
 
-                # Check if bot is already playing audio
-                if not vc.is_playing():
-                    # Bot is not playing audio, so play a greeting
-                    await self.play_greeting(vc, greeting_text)
-                else:
-                    # Bot is already playing audio. Decide if you want to queue here.
-                    print(f"Skipped greeting for {member} as audio is already playing.")
-        
-            elif before.channel is not None and after.channel is None:
-                vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
-                if vc and len(before.channel.members) == 1:  # Check if bot is alone
-                    await vc.disconnect()
-                    print(f"Disconnected from voice channel in guild {member.guild.name}")
+                    # Check if bot is already playing audio
+                    if not vc.is_playing():
+                        # Bot is not playing audio, so play a greeting
+                        await self.play_greeting(vc, greeting_text)
+                    else:
+                        # Bot is already playing audio. Decide if you want to queue here.
+                        print(f"Skipped greeting for {member} as audio is already playing.")
+            
+                elif before.channel is not None and after.channel is None:
+                    vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                    if vc and len(before.channel.members) == 1:  # Check if bot is alone
+                        await vc.disconnect()
+                        print(f"Disconnected from voice channel in guild {member.guild.name}")
 

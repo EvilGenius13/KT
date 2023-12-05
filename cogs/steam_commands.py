@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import requests
-import json
 from telemetry.tracing_setup import tracer
 
 
@@ -94,7 +93,7 @@ class SteamCommands(commands.Cog):
                 embed.set_thumbnail(url="https://i.postimg.cc/3R4fnw0x/twsgirl.png")
             
             with tracer.start_as_current_span("load_watchlist"):
-                watchlist_data = self._load_watchlist(guild_id)
+                # watchlist_data = self._load_watchlist(guild_id)
                 on_watchlist = self._is_on_watchlist(guild_id, arg)
 
             with tracer.start_as_current_span("setup_buttons"):

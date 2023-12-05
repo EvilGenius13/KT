@@ -28,8 +28,6 @@ KT is a multipurpose discord bot.
 ### ToDo
 - Ephemeral Messages
   - Change setting messages to be ephemeral.
-- Scheduled Events
-  - Have KT create events at a set time
 - VoiceEvents
 - SteamCommands
   - TODO: Steam watchlist buttons need to update on add/remove
