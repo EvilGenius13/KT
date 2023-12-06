@@ -9,7 +9,4 @@ KT is a multipurpose discord bot.
 - A server wide wishlist for steam games. Add games to the wishlist and see details about them.
 - Custom commands
 
-## Documentation
-Visit the [docs](https://evilgenius13.github.io/KT/) for more information.
-
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jfaigan)

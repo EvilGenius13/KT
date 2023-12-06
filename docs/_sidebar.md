@@ -1,0 +1,7 @@
+- [Home](/)
+- [Invite KT](invite.md)
+- [Commands](commands.md)
+- [Improvements](improvements.md)
+- [The Magic](themagic.md)
+- [To-Do List](todo.md)
+- [Bugs](bugs.md)
