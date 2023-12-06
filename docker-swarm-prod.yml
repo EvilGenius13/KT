@@ -7,13 +7,18 @@ services:
     command: --developer-mode=1 --smp 1
     ports:
       - "9042:9042"
-    healthcheck:
-      test: ["CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     volumes:
       - scylla_data:/var/lib/scylla
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # wait for scylla to start
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == eg-1 # need to change this to the name of your node
   
   kt:
     image: evilgenius13/kt:prod
