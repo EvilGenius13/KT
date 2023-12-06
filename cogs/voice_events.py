@@ -12,10 +12,11 @@ from telemetry.tracing_setup import tracer
 
 
 class VoiceEvents(commands.Cog):
-    def __init__(self, bot, session):
+    def __init__(self, bot, session, cache_event_handler):
         self.bot = bot
         self._voice_state_lock = asyncio.Lock()
         self.session = session
+        self.cache_event_handler = cache_event_handler
         self.guild_settings_cache = {}
         self.greetings = [
             "Hey {username}, great to see you here!",
@@ -49,8 +50,13 @@ class VoiceEvents(commands.Cog):
     async def get_cached_guild_settings(self, guild_id):
         if guild_id not in self.guild_settings_cache:
             settings = await get_guild_settings(self.session, guild_id)
-            # Even if settings are not found, store a default or None to avoid repeated DB queries
             self.guild_settings_cache[guild_id] = settings if settings else None
+            # Send cache miss event
+            self.cache_event_handler.increment_cache_miss()
+        else:
+            # Send cache hit event
+            self.cache_event_handler.increment_cache_hit()
+
         return self.guild_settings_cache[guild_id]
 
     async def play_greeting(self, voice_client, text):
@@ -145,7 +151,9 @@ class VoiceEvents(commands.Cog):
         with tracer.start_as_current_span("on_voice_state_update"):
             guild_id = str(member.guild.id)
             settings = await self.get_cached_guild_settings(guild_id)
-            greeting_text = random.choice(self.greetings).format(username=member.name)
+            
+            display_name = member.display_name
+            greeting_text = random.choice(self.greetings).format(username=display_name)
 
             if settings is None or not settings["voice_greeting"]:
                 return

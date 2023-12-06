@@ -5,11 +5,11 @@
 KT is a multipurpose discord bot.
 
 ## Features
-- Voice responses for players joining channel
-- Break messages that can be sent to a channel at a set interval
+- Voice responses for players joining channel, scheduled messages, and more.
+- A server wide wishlist for steam games. Add games to the wishlist and see details about them.
 - Custom commands
 
-## Commands
+## Commands (Replace with docs link)
 - Regular Commands
   - `*hello` - Says hello
 - Voice Commands
@@ -30,7 +30,9 @@ KT is a multipurpose discord bot.
   - Change setting messages to be ephemeral.
 - VoiceEvents
 - SteamCommands
-  - TODO: Steam watchlist buttons need to update on add/remove
+  - Steam watchlist buttons need to update on add/remove
+  - Find a way to announce if a game is on sale
+  - Need to finish caching wishlist with update when game added or removed
 - TextCommands
   - Add More Text Commands
 - MusicEvents
@@ -48,11 +50,7 @@ KT is a multipurpose discord bot.
 
 ### Improvements
 - Set limits for who can change settings
-- Logging
-  - TODO: More logging may be needed on other commands
-  - TODO: Need spans on new voice events
-- Spans and timing for functions
-- Do we move caching to something like redis or memcache?
+- Do we move caching to something like redis or memcache? (currently using in memory cache)
 
 ### Bugs
 - VoiceEvents
