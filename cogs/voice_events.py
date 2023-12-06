@@ -81,6 +81,8 @@ class VoiceEvents(commands.Cog):
 
                 # Save the response to an MP3 file
                 tts_filename = f"sounds/tts-{uuid.uuid4()}.mp3"
+                os.makedirs(os.path.dirname(tts_filename), exist_ok=True)
+                
                 with open(tts_filename, "wb") as out:
                     out.write(response.audio_content)
 
