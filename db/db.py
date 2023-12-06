@@ -10,11 +10,12 @@ load_dotenv()
 scylla_username = os.getenv('SCYLLA_USERNAME')
 scylla_password = os.getenv('SCYLLA_PASSWORD')
 
-if os.getenv('LOCAL_ENV') == 'true':
-    cluster = Cluster(['127.0.0.1'], protocol_version=4)
-else:
-  auth_provider = PlainTextAuthProvider(username=scylla_username, password=scylla_password)
-  cluster = Cluster(['scylla'], auth_provider=auth_provider, protocol_version=4)
+def create_cluster():
+    if os.getenv('LOCAL_ENV') == 'true':
+        return Cluster(['127.0.0.1'], protocol_version=4)
+    else:
+        auth_provider = PlainTextAuthProvider(username=scylla_username, password=scylla_password)
+        return Cluster(['scylla'], auth_provider=auth_provider, protocol_version=4)
 
 async def get_guild_settings(session, guild_id):
     """
@@ -111,6 +112,7 @@ def create_keyspace_and_tables(session):
         print(f"Error creating keyspace and tables: {e}")
 
 def setup_db_connection():
+    cluster = create_cluster()
     retry_attempts = 5
     retry_delay = 10  # seconds
 
@@ -127,8 +129,11 @@ def setup_db_connection():
             create_keyspace_and_tables(session)
             return session
         except Exception as e:
-            print(f"Connection attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
-            time.sleep(retry_delay)
-    else:
-        raise Exception("Failed to connect to ScyllaDB after multiple attempts.")
+            print(f"Connection attempt {attempt + 1} failed: {e}")
+            if attempt < retry_attempts - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Failed to connect to ScyllaDB after multiple attempts.")
+                raise
 
