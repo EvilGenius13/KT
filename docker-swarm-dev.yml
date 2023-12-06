@@ -24,6 +24,7 @@ services:
       - AXIOM_KEY=${AXIOM_KEY}
       - AXIOM_TRACE_KEY=${AXIOM_TRACING_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
+      - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_tts
     deploy:
       replicas: 1
       resources:
@@ -32,9 +33,11 @@ services:
           memory: 512M
       restart_policy:
         condition: on-failure
+    secrets:
+      - google_tts
 
 secrets:
-  tts_api_creds:
+  google_tts:
     external: true
 
 volumes:

@@ -63,7 +63,7 @@ class Settings(commands.Cog):
                     time_zone
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (guild_id, guild_name, False, False, False, 0, 0, "US/Eastern")) # Change to UTC after testing
+                """, (guild_id, guild_name, False, False, False, 0, 0, "UTC"))
             await ctx.send(f"Registered {guild_name} successfully.")
         except Exception as e:
             await ctx.send(f"Error registering {guild_name}: {e}")
