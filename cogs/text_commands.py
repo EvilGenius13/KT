@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from telemetry.axiom_setup import AxiomHelper
 from datetime import datetime, timedelta
+import pytz
 
 axiom = AxiomHelper()
 
@@ -16,26 +17,30 @@ class TextCommands(commands.Cog):
   
   @staticmethod
   def calculate_next_game_night_time(current_time):
-    """
-    Calculates the next occurrence of game night.
-    Game nights are on Tuesday and Thursday at 7:30 PM.
-    """
-    target_hour = 19  # 7:30 PM in 24-hour format
-    target_minute = 30
+      """
+      Calculates the next occurrence of game night in EST.
+      Game nights are on Tuesday and Thursday at 7:30 PM EST.
+      """
+      target_hour = 19  # 7:30 PM in 24-hour format
+      target_minute = 30
 
-    # If current time is past 7:30 PM, start calculation from the next day
-    if current_time.hour > target_hour or (current_time.hour == target_hour and current_time.minute > target_minute):
-        current_time += timedelta(days=1)
+      # Convert current time to Eastern Standard Time (EST)
+      eastern = pytz.timezone('America/New_York')
+      current_time = current_time.astimezone(eastern)
 
-    # Reset time to 7:30 PM
-    next_game_night = current_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
+      # If current time is past 7:30 PM EST, start calculation from the next day
+      if current_time.hour > target_hour or (current_time.hour == target_hour and current_time.minute > target_minute):
+          current_time += timedelta(days=1)
 
-    # Find the next Tuesday (1) or Thursday (3)
-    while next_game_night.weekday() != 1 and next_game_night.weekday() != 3:
-        next_game_night += timedelta(days=1)
+      # Reset time to 7:30 PM EST
+      next_game_night = current_time.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
 
-    return next_game_night
-  
+      # Find the next Tuesday (1) or Thursday (3)
+      while next_game_night.weekday() != 1 and next_game_night.weekday() != 3:
+          next_game_night += timedelta(days=1)
+
+      # Convert back to UTC for asyncio.sleep_until
+      return next_game_night.astimezone(pytz.utc)
   
   @commands.command()
   async def hello(self, ctx):
@@ -61,7 +66,7 @@ class TextCommands(commands.Cog):
       await self.announce_game_night()
 
   async def announce_game_night(self):
-      embed = discord.Embed(title="Game Night!", description="It's time for our weekly game night! Join us in the gaming channel.", color=0x00ff00)
+      embed = discord.Embed(title="Game Night!", description="It's time for our game night! Join us in the 'General' voice channel.", color=0xea1010)
       specific_guild_id = 176521576882110464  # Replace with your specific guild's ID
       specific_channel_id = 176521576882110464  # Replace with your specific channel's ID
       guild = self.bot.get_guild(specific_guild_id)
