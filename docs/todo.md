@@ -2,6 +2,7 @@
 - Ephemeral Messages
   - Change setting messages to be ephemeral.
 - VoiceEvents
+  - Scheduled sound deletion
 - SteamCommands
   - Steam watchlist buttons need to update on add/remove
   - Find a way to announce if a game is on sale
