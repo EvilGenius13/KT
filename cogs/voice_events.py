@@ -9,6 +9,9 @@ from db.db import get_guild_settings
 from google.cloud import texttospeech
 import uuid
 from telemetry.tracing_setup import tracer
+from telemetry.axiom_setup import AxiomHelper
+
+axiom = AxiomHelper()
 
 
 class VoiceEvents(commands.Cog):
@@ -71,13 +74,15 @@ class VoiceEvents(commands.Cog):
                 # Build the voice request, select the language code and the SSML voice gender
                 voice = texttospeech.VoiceSelectionParams(
                     language_code="en-US",
-                    name="en-US-Studio-O",
+                    name="en-US-Journey-F",
                     ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
                 )
 
                 # Select the type of audio file you want returned
                 audio_config = texttospeech.AudioConfig(
-                    audio_encoding=texttospeech.AudioEncoding.MP3
+                    audio_encoding=texttospeech.AudioEncoding.MP3,
+                    pitch= 4.4,
+                    speaking_rate= 1.0
                 )
             with tracer.start_as_current_span("synthesize_speech"):
                 # Perform the text-to-speech request
@@ -149,34 +154,50 @@ class VoiceEvents(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         with tracer.start_as_current_span("on_voice_state_update"):
-            guild_id = str(member.guild.id)
-            settings = await self.get_cached_guild_settings(guild_id)
-            
-            display_name = member.display_name
-            greeting_text = random.choice(self.greetings).format(username=display_name)
+            try:
+                guild_id = str(member.guild.id)
+                settings = await self.get_cached_guild_settings(guild_id)
+                
+                display_name = member.display_name
+                greeting_text = random.choice(self.greetings).format(username=display_name)
 
-            if settings is None or not settings["voice_greeting"]:
-                return
-            
-            async with self._voice_state_lock:  # Lock to ensure consistency
-                # User joined a voice channel
-                if before.channel is None and after.channel is not None:
-                    vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
-                    if not vc:
-                        # Bot is not in a channel, so join the user's channel
-                        vc = await after.channel.connect()
+                if settings is None or not settings["voice_greeting"]:
+                    return
+                
+                async with self._voice_state_lock:
+                    # User switched voice channels
+                    if before.channel is not None and after.channel is not None and before.channel != after.channel:
+                        vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                        if vc:
+                            await vc.move_to(after.channel)  # Move the bot to the new channel
+                            if not vc.is_playing():
+                                await self.play_greeting(vc, greeting_text)
+                            else:
+                                print(f"Skipped greeting for {member} as audio is already playing.")
 
-                    # Check if bot is already playing audio
-                    if not vc.is_playing():
-                        # Bot is not playing audio, so play a greeting
-                        await self.play_greeting(vc, greeting_text)
-                    else:
-                        # Bot is already playing audio. Decide if you want to queue here.
-                        print(f"Skipped greeting for {member} as audio is already playing.")
+                    # User joined a voice channel
+                    elif before.channel is None and after.channel is not None:
+                        vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                        if not vc:
+                            vc = await after.channel.connect()
+                        if not vc.is_playing():
+                            await self.play_greeting(vc, greeting_text)
+                        else:
+                            print(f"Skipped greeting for {member} as audio is already playing.")
+                    
+                    # User left a voice channel
+                    elif before.channel is not None and after.channel is None:
+                        vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
+                        if vc and len(before.channel.members) == 1:
+                            await vc.disconnect()
+                            print(f"Disconnected from voice channel in guild {member.guild.name}")
             
-                elif before.channel is not None and after.channel is None:
-                    vc = discord.utils.get(self.bot.voice_clients, guild=member.guild)
-                    if vc and len(before.channel.members) == 1:  # Check if bot is alone
-                        await vc.disconnect()
-                        print(f"Disconnected from voice channel in guild {member.guild.name}")
+            except Exception as e:
+                error_data = [{
+                    "type": "error",
+                    "description": str(e),
+                }]
+                axiom.send_event(error_data)
 
+
+    

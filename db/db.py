@@ -3,6 +3,9 @@ from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from dotenv import load_dotenv
 import time
+from telemetry.axiom_setup import AxiomHelper
+
+axiom = AxiomHelper()
 
 load_dotenv()
 
@@ -106,6 +109,17 @@ def create_keyspace_and_tables(session):
                 PRIMARY KEY (guild_id, app_id)
             )
             """)
+        
+        # Create User XP Table
+        session.execute("""
+            CREATE TABLE IF NOT EXISTS user_xp (
+                guild_id text,
+                user_id text,
+                xp int,
+                level int,
+                PRIMARY KEY (guild_id, user_id)       
+            )                       
+            """)
 
         print("Keyspace and Tables Created Successfully")
     except Exception as e:
@@ -123,6 +137,7 @@ def setup_db_connection():
             row = session.execute("SELECT cluster_name FROM system.local").one()
             if row:
                 print(f"Successfully connected to ScyllaDB cluster: {row.cluster_name}")
+                axiom.send_event([{ "type": "info", "description": f"Successfully connected to ScyllaDB cluster: {row.cluster_name}" }])
             else:
                 print("Connection to ScyllaDB cluster established, but couldn't retrieve cluster name.")
             
@@ -130,6 +145,7 @@ def setup_db_connection():
             return session
         except Exception as e:
             print(f"Connection attempt {attempt + 1} failed: {e}")
+            axiom.send_event([{ "type": "error", "description": f"Scylla Connection attempt {attempt + 1} failed: {e}" }])
             if attempt < retry_attempts - 1:
                 print(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
