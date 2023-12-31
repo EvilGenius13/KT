@@ -81,7 +81,7 @@ class VoiceEvents(commands.Cog):
                 # Select the type of audio file you want returned
                 audio_config = texttospeech.AudioConfig(
                     audio_encoding=texttospeech.AudioEncoding.MP3,
-                    pitch= 4.4,
+                    pitch= 2.0,
                     speaking_rate= 1.0
                 )
             with tracer.start_as_current_span("synthesize_speech"):
