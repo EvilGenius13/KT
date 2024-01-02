@@ -8,6 +8,7 @@ KT is a multipurpose discord bot.
 - Voice responses for players joining channel, scheduled messages, and more.
 - A server wide wishlist for steam games. Add games to the wishlist and see details about them.
 - Custom commands
+- XP system with levels for users. (Roles coming soon)
 
 ## Documentation
 Visit the [docs](https://evilgenius13.github.io/KT/) for more information.
