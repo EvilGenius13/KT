@@ -67,7 +67,6 @@ class Music(commands.Cog):
                 if not vc:
                     vc = await channel.connect()
 
-
             # Now `vc` is defined, and we can safely check if it's playing or paused
             with tracer.start_as_current_span("process_and_add_song", attributes={"operation": "http_request", "service": "YouTube"}):
                 ydl_opts = {
@@ -93,7 +92,14 @@ class Music(commands.Cog):
             with tracer.start_as_current_span("play_music", attributes={"operation": "discord"}):
                 # If a song is not currently playing, start playing
                 if not vc.is_playing() and not vc.is_paused():
-                    await ctx.send("DJ KT is on the decks!")
+                    voice_events_cog = self.bot.get_cog("VoiceEvents")
+                    if voice_events_cog:
+                        await voice_events_cog.play_dj_announcement(ctx.guild)
+                    
+                    while vc.is_playing():
+                        await asyncio.sleep(1)
+                    await ctx.send("Playing Now!")
+                    
                     await self.play_next_in_queue(ctx.guild)
                 else:
                     await ctx.send("Song added to the queue.")

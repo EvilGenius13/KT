@@ -151,6 +151,14 @@ class VoiceEvents(commands.Cog):
                     break_text = random.choice(self.break_messages)
                     await self.play_greeting(vc, break_text)
 
+    async def play_dj_announcement(self, guild):
+        vc = discord.utils.get(self.bot.voice_clients, guild=guild)
+        if vc and vc.is_connected():
+            vc.stop()
+            await asyncio.sleep(0.5)
+            dj_announcement_text = "DJ KT is on the decks!"
+            await self.play_greeting(vc, dj_announcement_text)
+    
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         with tracer.start_as_current_span("on_voice_state_update"):
