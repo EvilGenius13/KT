@@ -12,6 +12,7 @@ from cogs.settings import Settings
 from cogs.music import Music
 from cogs.xp_system import XpSystem
 from cogs.game_quiz import GameQuiz
+from cogs.ai import AI
 from jobs.cache_event_handler import BatchCacheEventHandler
 from telemetry.tracing_setup import tracer
 
@@ -49,6 +50,7 @@ async def on_ready():
         await bot.add_cog(Music(bot))
         await bot.add_cog(XpSystem(bot, session))
         await bot.add_cog(GameQuiz(bot))
+        await bot.add_cog(AI(bot))
         await bot.tree.sync()
 
         # Start the cache event handler
