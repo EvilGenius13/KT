@@ -7,6 +7,9 @@ import pytz
 axiom = AxiomHelper()
 
 class TextCommands(commands.Cog):
+  GAME_NIGHT_TASK_ID = 'game_night_task'
+  running_tasks = {}
+  
   def __init__(self, bot):
     self.bot = bot
     self.game_night.start()
@@ -61,9 +64,15 @@ class TextCommands(commands.Cog):
 
   @tasks.loop(hours=24)
   async def game_night(self):
+      if self.__class__.GAME_NIGHT_TASK_ID in self.__class__.running_tasks:
+            print("Game night task is already running. Skipping initialization.")
+            return
+      
       next_game_night = self.calculate_next_game_night_time(datetime.now())
       await discord.utils.sleep_until(next_game_night)
       await self.announce_game_night()
+
+      self.__class__.running_tasks[self.__class__.GAME_NIGHT_TASK_ID] = self.game_night
 
   async def announce_game_night(self):
       embed = discord.Embed(title="Game Night!", description="It's time for our game night! Join us in the 'General' voice channel.", color=0xea1010)
@@ -74,4 +83,5 @@ class TextCommands(commands.Cog):
           channel = guild.get_channel(specific_channel_id)
           if channel:
               await channel.send(embed=embed)
+      self.__class__.running_tasks.pop(self.__class__.GAME_NIGHT_TASK_ID, None)
 

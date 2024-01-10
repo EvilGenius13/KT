@@ -117,6 +117,7 @@ def create_keyspace_and_tables(session):
                 user_id text,
                 xp int,
                 level int,
+                last_updated timestamp,
                 PRIMARY KEY (guild_id, user_id)       
             )                       
             """)
