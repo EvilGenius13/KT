@@ -29,6 +29,7 @@ services:
       - AXIOM_KEY=${AXIOM_KEY}
       - AXIOM_TRACE_KEY=${AXIOM_TRACING_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
+      - OPENAI_KEY=${OPENAI_KEY}
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_tts
     deploy:
       replicas: 1
