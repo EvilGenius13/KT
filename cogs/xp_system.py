@@ -37,7 +37,7 @@ class XpSystem(commands.Cog):
         current_time = datetime.datetime.now()
 
         # Cooldown Period
-        cooldown_period = datetime.timedelta(seconds=15)
+        cooldown_period = datetime.timedelta(seconds=5)
         last_message_time = self.last_message_timestamps.get((guild_id, user_id))
 
         # Check if message is within cooldown period
