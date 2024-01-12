@@ -125,13 +125,13 @@ class XpSystem(commands.Cog):
         except Exception as e:
             await message.channel.send(f"An unexpected error occurred: {e}")
 
-    def _level_for_xp(self, xp, base_xp=100, multiplier=0.5):
+    def _level_for_xp(self, xp, base_xp=100, multiplier=0.8):
         level = 1
         while self._xp_for_level(level + 1, base_xp, multiplier) <= xp:
             level += 1
         return level
 
-    def _xp_for_level(self, level, base_xp=100, multiplier=0.5):
+    def _xp_for_level(self, level, base_xp=100, multiplier=0.8):
         if level <= 1:
             return 0
         return int(base_xp * (level**multiplier))
