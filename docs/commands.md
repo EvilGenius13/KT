@@ -40,3 +40,10 @@ Once you have fetched a game, it will give you basic info such as the game name,
   - `*steam_fetch <appid>` - Fetches steam game info
     - Example: `*steam_fetch 361420` will fetch info for Astroneer
   - `*watchlist` - Lists all games on watchlist
+
+## AI Commands
+- `*ai` - Explains how to use the AI bot. (I should add this to the help command)
+- `*team_tws <message>` - Sends a message to KT and retrieves information based on Team Time Well spent such as game times, history, and more.
+  - Example: `*team_tws What night is game night?`
+- `*chat <message>` - Sends a message to KT (running off chatGPT).
+  - Example: `*chat What is the population of Canada?`
