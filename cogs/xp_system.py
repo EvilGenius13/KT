@@ -24,11 +24,26 @@ class XpSystem(commands.Cog):
     def __init__(self, bot, session):
         self.bot = bot
         self.session = session
+        self.last_message_timestamps = {}
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user or message.author.bot:
             return
+
+        # Cooldown implementation
+        user_id = message.author.id
+        guild_id = message.guild.id
+        current_time = datetime.datetime.now()
+
+        # Cooldown Period
+        cooldown_period = datetime.timedelta(seconds=15)
+        last_message_time = self.last_message_timestamps.get((guild_id, user_id))
+
+        # Check if message is within cooldown period
+        if last_message_time and (current_time - last_message_time) < cooldown_period:
+            return  # Skip XP processing if within cooldown
+        
 
         current_xp, current_level = self._load_user_xp(
             message.guild.id, message.author.id
@@ -61,6 +76,9 @@ class XpSystem(commands.Cog):
                 if new_level > current_level:
                     await message.channel.send(f"{message.author.mention} You've leveled up to level {new_level}!")
                     await self.update_user_role_based_on_level(message, new_level)
+                
+                # Update the last message timestamp
+                self.last_message_timestamps[(guild_id, user_id)] = current_time
 
     async def update_user_role_based_on_level(self, message, new_level):
         try:
