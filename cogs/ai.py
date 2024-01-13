@@ -33,26 +33,26 @@ class AI(commands.Cog):
             if time_diff > 60 or author_id != self.last_author_id:
                 my_thread = client.beta.threads.create()
                 self.thread_id = my_thread.id
-                my_thread_id = self.thread_id
-            else:
-                my_thread_id = self.thread_id
+            
+            my_thread_id = self.thread_id
+
             try:
                 with tracer.start_as_current_span("openai", attributes={"type": "openai"}):
                     my_thread_message = client.beta.threads.messages.create(
-                        thread_id = my_thread.id,
+                        thread_id = my_thread_id,
                         role = "user",
                         content = message,
                     )
 
                     my_run = client.beta.threads.runs.create(
-                        thread_id = my_thread.id,
+                        thread_id = my_thread_id,
                         assistant_id = str(self.assistant_id),
                         instructions = f"Please address the user as {user_name}",
                     )
                     
                     while my_run.status in ["queued", "in_progress"]:
                         keep_retrieving_run = client.beta.threads.runs.retrieve(
-                            thread_id=my_thread.id,
+                            thread_id=my_thread_id,
                             run_id=my_run.id
                         )
                         print(f"Run status: {keep_retrieving_run.status}")
@@ -63,7 +63,7 @@ class AI(commands.Cog):
 
 
                             all_messages = client.beta.threads.messages.list(
-                                thread_id=my_thread.id
+                                thread_id=my_thread_id
                             )
 
                             data = [{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}]
@@ -103,13 +103,15 @@ class AI(commands.Cog):
                 await ctx.send(
                     "An error occurred while sending the message. Please try again."
                 )
-
+            data = [{"type": "command", "value": "tws_chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}]
+            axiom.send_event(data)
             self.last_message_time = current_time
             self.last_author_id = author_id
 
     @commands.command()
     async def chat(self, ctx, *, message):
         with tracer.start_as_current_span("chat", attributes={"type": "command"}):
+            user_name = ctx.author.name
             try:
                 with tracer.start_as_current_span("openai", attributes={"type": "openai"}):
                     response = client.chat.completions.create(
@@ -117,16 +119,16 @@ class AI(commands.Cog):
                         messages=[
                             {
                                 "role": "system",
-                                "content": f"You are a friendly helpful assistant named KT. You are part of team Time Well Spent (TWS). You can also address the user as {ctx.author.name}"
+                                "content": f"You are a friendly helpful assistant named KT. You are part of team Time Well Spent (TWS). You can also address the user as {user_name}"
                             },
                             {
                                 "role": "user",
                                 "content": message
                             }
                         ],
-                        temperature=1,
+                        temperature=0.5,
                         max_tokens=256,
-                        top_p=1,
+                        top_p=0.5,
                         frequency_penalty=0,
                         presence_penalty=0
                     )
@@ -149,3 +151,6 @@ class AI(commands.Cog):
             except Exception as e:
                 print(f"Error during Discord operation: {type(e).__name__}: {e}")
                 await ctx.send("An error occurred while sending the message. Please try again.")
+            
+            data = [{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": answer}]
+            axiom.send_event(data)

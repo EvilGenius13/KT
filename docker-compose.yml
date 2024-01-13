@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  scylla:
+    image: scylladb/scylla:5.2
+    container_name: scylla
+    command: --developer-mode=1 --smp 1
+    ports:
+      - "9042:9042"
+    volumes:
+      - scylla_data:/var/lib/scylla
+          
+  redis:
+    image: redis:5.0.5
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  scylla_data:
+  redis_data:
