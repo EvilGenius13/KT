@@ -5,6 +5,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/EvilGenius13/KT)
 ![Platforms](https://img.shields.io/badge/platform-docker-blue)
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/evilgenius13/kt/prod?logo=docker)
+
 KT is a multipurpose discord bot.
 
 ## Features

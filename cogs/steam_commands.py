@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import requests
-from telemetry.tracing_setup import tracer
+from initializers.tracing_setup import tracer
 
 
 class FetchButton(discord.ui.Button):

@@ -3,7 +3,7 @@ from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from dotenv import load_dotenv
 import time
-from telemetry.axiom_setup import AxiomHelper
+from initializers.axiom_setup import AxiomHelper
 
 axiom = AxiomHelper()
 

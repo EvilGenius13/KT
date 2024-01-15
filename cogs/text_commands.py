@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from telemetry.axiom_setup import AxiomHelper
+from initializers.axiom_setup import AxiomHelper
 from datetime import datetime, timedelta
 import pytz
 

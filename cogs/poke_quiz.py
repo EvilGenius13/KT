@@ -9,7 +9,7 @@ class Modal(discord.ui.Modal, title="modal test"):
     await interaction.response.send_message(f"You said {self.answer.value}")
 
 
-class GameQuiz(commands.Cog):
+class PokeQuiz(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

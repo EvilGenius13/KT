@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands, tasks
-from telemetry.tracing_setup import tracer
-from telemetry.axiom_setup import AxiomHelper
+from initializers.tracing_setup import tracer
+from initializers.axiom_setup import AxiomHelper
 import datetime
+from initializers.redis import r
 
 axiom = AxiomHelper()
 

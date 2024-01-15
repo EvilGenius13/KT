@@ -30,6 +30,8 @@ services:
       - AXIOM_TRACE_KEY=${AXIOM_TRACING_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
       - OPENAI_KEY=${OPENAI_KEY}
+      - OPENAI_ASSISTANT=${OPENAI_ASSISTANT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_tts
     deploy:
       replicas: 1
@@ -42,9 +44,27 @@ services:
     secrets:
       - google_tts
 
+  redis:
+    image: redis:7.2.4
+    container_name: redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+
 secrets:
   google_tts:
     external: true
 
 volumes:
   scylla_data:
+  redis_data:

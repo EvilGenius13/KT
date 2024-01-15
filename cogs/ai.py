@@ -7,8 +7,8 @@ import datetime
 
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
-from telemetry.tracing_setup import tracer
-from telemetry.axiom_setup import AxiomHelper
+from initializers.tracing_setup import tracer
+from initializers.axiom_setup import AxiomHelper
 
 axiom = AxiomHelper()
 
@@ -24,7 +24,7 @@ class AI(commands.Cog):
 
     @commands.command()
     async def tws_chat(self, ctx, *, message):
-        with tracer.start_as_current_span("chat", attributes={"type": "command"}):
+        with tracer.start_as_current_span("tws_chat", attributes={"type": "command"}):
             user_name = ctx.author.name
             current_time = datetime.datetime.now()
             time_diff = (current_time - self.last_message_time).total_seconds() if self.last_message_time else 61
