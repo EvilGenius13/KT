@@ -1,7 +1,9 @@
 import discord
 from discord.ext import commands
 import requests
+import json
 from initializers.tracing_setup import tracer
+from initializers.redis import r
 
 
 class FetchButton(discord.ui.Button):
@@ -33,9 +35,10 @@ class WatchlistView(discord.ui.View):
             self.add_item(button)
 
 class SteamCommands(commands.Cog):
-    def __init__(self, bot, session):
+    def __init__(self, bot, session, cache_event_handler):
         self.bot = bot
         self.session = session
+        self.cache_event_handler = cache_event_handler
         
     @commands.command()
     async def steam_fetch(self, ctx, arg):
@@ -146,10 +149,19 @@ class SteamCommands(commands.Cog):
                 await ctx.send(view=view)
     
     def _load_watchlist(self, guild_id):
+        cache_key = f"watchlist:{guild_id}"
+        cached_watchlist = r.get(cache_key)
+
+        if cached_watchlist:
+            self.cache_event_handler.increment_cache_hit()
+            return json.loads(cached_watchlist)
+
         try: 
+            self.cache_event_handler.increment_cache_miss()
             query = "SELECT app_id, app_name FROM wishlists WHERE guild_id = %s"
             rows = self.session.execute(query, [guild_id])
             watchlist = [{'app_id': row.app_id, 'app_name': row.app_name} for row in rows]
+            r.set(cache_key, json.dumps(watchlist))
             return watchlist
         except Exception as e:
             print(f"Error in _load_watchlist: {e}")
@@ -162,6 +174,9 @@ class SteamCommands(commands.Cog):
             VALUES (%s, %s, %s)
             """
             self.session.execute(query, (guild_id, app_id, game_name))
+            watchlist = self._load_watchlist(guild_id)
+            watchlist.append({'app_id': app_id, 'app_name': game_name})
+            r.set(f"watchlist:{guild_id}", json.dumps(watchlist))
         except Exception as e:
             print(f"Error adding to watchlist: {e}")
 
@@ -169,10 +184,14 @@ class SteamCommands(commands.Cog):
         try:
             query = "DELETE FROM wishlists WHERE guild_id = %s AND app_id = %s"
             self.session.execute(query, (guild_id, app_id))
+            watchlist = self._load_watchlist(guild_id)
+            watchlist = [item for item in watchlist if item['app_id'] != app_id]
+            r.set(f"watchlist:{guild_id}", json.dumps(watchlist))
         except Exception as e:
             print(f"Error removing from watchlist: {e}")
 
     def _is_on_watchlist(self, guild_id, app_id):
+        # Need to eventually figure out caching for this. Issue is it messes with the buttons when calling *watchlist
         try:
             query = "SELECT app_id FROM wishlists WHERE guild_id = %s AND app_id = %s"
             row = self.session.execute(query, (guild_id, app_id)).one()

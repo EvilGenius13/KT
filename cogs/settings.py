@@ -78,12 +78,10 @@ class Settings(commands.Cog):
 
         if cached_settings:
             settings = json.loads(cached_settings)
-            print("Retrieved guild settings from cache")
         else:
             settings = await get_guild_settings(self.session, guild_id)
             if settings is not None:
                 r.set(redis_key, json.dumps(settings))
-                print("Missed settings, set guild settings in cache")
             else:
                 await ctx.send("Guild settings not found. Please register your guild first.")
                 return
@@ -138,7 +136,6 @@ class Settings(commands.Cog):
                 # Update the settings in the database
                 await update_guild_settings(self.session, guild_id, current_settings)
                 r.set(redis_key, json.dumps(current_settings))
-                print("Updated guild settings in cache")
 
                 # Update button labels and styles
                 for btn in view.children:
