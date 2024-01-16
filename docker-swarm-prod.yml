@@ -22,6 +22,7 @@ services:
   
   kt:
     image: evilgenius13/kt:prod
+    container_name: kt
     depends_on:
       - scylla
     environment:
