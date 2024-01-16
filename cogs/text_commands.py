@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from telemetry.axiom_setup import AxiomHelper
+from initializers.axiom_setup import AxiomHelper
 from datetime import datetime, timedelta
 import pytz
 
@@ -65,7 +65,8 @@ class TextCommands(commands.Cog):
   @tasks.loop(hours=24)
   async def game_night(self):
       if self.__class__.GAME_NIGHT_TASK_ID in self.__class__.running_tasks:
-            print("Game night task is already running. Skipping initialization.")
+            data = [{"type": "error", "value": "game night task already running"}]
+            axiom.send_event(data)
             return
       
       next_game_night = self.calculate_next_game_night_time(datetime.now())

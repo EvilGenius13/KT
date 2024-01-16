@@ -3,7 +3,7 @@ from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from dotenv import load_dotenv
 import time
-from telemetry.axiom_setup import AxiomHelper
+from initializers.axiom_setup import AxiomHelper
 
 axiom = AxiomHelper()
 
@@ -120,6 +120,16 @@ def create_keyspace_and_tables(session):
                 last_updated timestamp,
                 PRIMARY KEY (guild_id, user_id)       
             )                       
+            """)
+        
+        # Create Quiz Table
+        session.execute("""
+            CREATE TABLE IF NOT EXISTS quiz (
+                guild_id text,
+                user_id text,
+                streak int,
+                PRIMARY KEY (guild_id, user_id)
+            )
             """)
 
         print("Keyspace and Tables Created Successfully")

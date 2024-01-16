@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands, tasks
-from telemetry.tracing_setup import tracer
-from telemetry.axiom_setup import AxiomHelper
+from initializers.tracing_setup import tracer
+from initializers.axiom_setup import AxiomHelper
 import datetime
+from initializers.redis import r
 
 axiom = AxiomHelper()
 
@@ -168,7 +169,9 @@ class XpSystem(commands.Cog):
                 result = self.session.execute(query, [guild_id_str, user_id_str])
                 row = result.one()
                 if row is None:
-                    return 0, 0
+                        # Initialize new user with Level 1 and 0 XP
+                        self._update_user_xp_and_level(guild_id, user_id, 0, 1)
+                        return 0, 1
                 return row.xp, row.level
 
     def log_role_event(self, member, action, level):

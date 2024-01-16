@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import os
-from telemetry.axiom_setup import AxiomHelper
 import asyncio
 
 from db.db import setup_db_connection
@@ -11,10 +10,11 @@ from cogs.steam_commands import SteamCommands
 from cogs.settings import Settings
 from cogs.music import Music
 from cogs.xp_system import XpSystem
-from cogs.game_quiz import GameQuiz
+from cogs.poke_quiz import PokeQuiz
 from cogs.ai import AI
+from initializers.axiom_setup import AxiomHelper
+from initializers.tracing_setup import tracer
 from jobs.cache_event_handler import BatchCacheEventHandler
-from telemetry.tracing_setup import tracer
 
 axiom = AxiomHelper()
 
@@ -44,12 +44,12 @@ async def on_ready():
         
         # Initiate cog objects
         await bot.add_cog(TextCommands(bot))
-        await bot.add_cog(SteamCommands(bot, session))
+        await bot.add_cog(SteamCommands(bot, session, cache_event_handler))
         await bot.add_cog(VoiceEvents(bot, session, cache_event_handler))
         await bot.add_cog(Settings(bot, bot.get_cog("VoiceEvents"), session))
         await bot.add_cog(Music(bot))
         await bot.add_cog(XpSystem(bot, session))
-        await bot.add_cog(GameQuiz(bot))
+        await bot.add_cog(PokeQuiz(bot, session, cache_event_handler))
         await bot.add_cog(AI(bot))
         await bot.tree.sync()
 

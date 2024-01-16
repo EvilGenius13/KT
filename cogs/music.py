@@ -3,7 +3,7 @@ from discord.ext import commands
 import yt_dlp
 import asyncio
 import os
-from telemetry.tracing_setup import tracer
+from initializers.tracing_setup import tracer
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

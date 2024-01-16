@@ -5,11 +5,13 @@ import pytz
 import random
 import os
 import asyncio
+import json
 from db.db import get_guild_settings
 from google.cloud import texttospeech
 import uuid
-from telemetry.tracing_setup import tracer
-from telemetry.axiom_setup import AxiomHelper
+from initializers.tracing_setup import tracer
+from initializers.axiom_setup import AxiomHelper
+from initializers.redis import r
 
 axiom = AxiomHelper()
 
@@ -20,7 +22,6 @@ class VoiceEvents(commands.Cog):
         self._voice_state_lock = asyncio.Lock()
         self.session = session
         self.cache_event_handler = cache_event_handler
-        self.guild_settings_cache = {}
         self.greetings = [
             "Hey {username}, great to see you here!",
             "Hello {username}, welcome to the channel!",
@@ -51,16 +52,19 @@ class VoiceEvents(commands.Cog):
         self.break_time.cancel()
 
     async def get_cached_guild_settings(self, guild_id):
-        if guild_id not in self.guild_settings_cache:
-            settings = await get_guild_settings(self.session, guild_id)
-            self.guild_settings_cache[guild_id] = settings if settings else None
-            # Send cache miss event
-            self.cache_event_handler.increment_cache_miss()
-        else:
-            # Send cache hit event
-            self.cache_event_handler.increment_cache_hit()
+        redis_key = f"guild_settings:{guild_id}"
+        cached_settings = r.get(redis_key)
 
-        return self.guild_settings_cache[guild_id]
+        if cached_settings is not None:
+            self.cache_event_handler.increment_cache_hit()
+            return json.loads(cached_settings)
+        else:
+            settings = await get_guild_settings(self.session, guild_id)
+            if settings:
+                r.set(redis_key, json.dumps(settings))
+                self.cache_event_handler.increment_cache_miss()
+                return settings
+            return None
 
     async def play_greeting(self, voice_client, text):
         with tracer.start_as_current_span("play_greeting"):
