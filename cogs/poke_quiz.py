@@ -21,7 +21,6 @@ class PokeQuizModal(discord.ui.Modal):
         self.add_item(self.answer_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        guild_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
         user_answer = self.answer_input.value.lower()
 
