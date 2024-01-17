@@ -4,4 +4,6 @@
 - Remove remaining print statements and replace with logging
 - Redis integration
 - Add game teaching you how to code?
-- Add more games 
+- Add more games
+- Add twitch game API integration
+- Add steam game stats API integration
