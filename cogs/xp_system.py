@@ -32,6 +32,9 @@ class XpSystem(commands.Cog):
         if message.author == self.bot.user or message.author.bot:
             return
 
+        if message.guild is None:
+            return
+
         # Cooldown implementation
         user_id = message.author.id
         guild_id = message.guild.id
