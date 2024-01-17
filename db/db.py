@@ -125,10 +125,9 @@ def create_keyspace_and_tables(session):
         # Create Quiz Table
         session.execute("""
             CREATE TABLE IF NOT EXISTS quiz (
-                guild_id text,
                 user_id text,
                 streak int,
-                PRIMARY KEY (guild_id, user_id)
+                PRIMARY KEY (user_id)
             )
             """)
 

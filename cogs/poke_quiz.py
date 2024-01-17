@@ -27,8 +27,8 @@ class PokeQuizModal(discord.ui.Modal):
 
         # Fetch the current streak
         try:
-            select_query = "SELECT streak FROM quiz WHERE guild_id = %s AND user_id = %s"
-            row = self.session.execute(select_query, (guild_id, user_id)).one()
+            select_query = "SELECT streak FROM quiz WHERE user_id = %s"
+            row = self.session.execute(select_query, (user_id)).one()
             current_streak = row.streak if row else 0
         except Exception as e:
             print(f"Error fetching quiz streak: {e}")
@@ -44,10 +44,10 @@ class PokeQuizModal(discord.ui.Modal):
         # Update the streak in the database
         try:
             update_query = """
-                INSERT INTO quiz (guild_id, user_id, streak)
-                VALUES (%s, %s, %s)
+                INSERT INTO quiz (user_id, streak)
+                VALUES (%s, %s)
                 """
-            self.session.execute(update_query, (guild_id, user_id, new_streak))
+            self.session.execute(update_query, (user_id, new_streak))
         except Exception as e:
             print(f"Error updating quiz streak: {e}")
 
