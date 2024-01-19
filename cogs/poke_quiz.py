@@ -27,7 +27,7 @@ class PokeQuizModal(discord.ui.Modal):
         # Fetch the current streak
         try:
             select_query = "SELECT streak FROM quiz WHERE user_id = %s"
-            row = self.session.execute(select_query, (user_id)).one()
+            row = self.session.execute(select_query, (user_id,)).one()
             current_streak = row.streak if row else 0
         except Exception as e:
             print(f"Error fetching quiz streak: {e}")
@@ -69,7 +69,7 @@ class PokeQuiz(commands.Cog):
             with tracer.start_as_current_span("http_request"):
                 try:
                     response = requests.get(
-                        f"https://pokeapi.co/api/v2/pokemon/{pokedex_number}"
+                        f"https://pokecache.djjoker13.workers.dev/?id={pokedex_number}"
                     )
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:

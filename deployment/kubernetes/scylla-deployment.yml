@@ -1,0 +1,50 @@
+# Scylla Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scylla
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scylla
+  template:
+    metadata:
+      labels:
+        app: scylla
+    spec:
+      containers:
+      - name: scylla
+        image: scylladb/scylla:5.2
+        args: ["--developer-mode=1", "--smp", "1"]
+        ports:
+        - containerPort: 9042
+        volumeMounts:
+        - name: scylla-data
+          mountPath: /var/lib/scylla
+        readinessProbe:
+          exec:
+            command:
+            - cqlsh
+            - -e
+            - DESCRIBE KEYSPACES
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: scylla-data
+        persistentVolumeClaim:
+          claimName: scylla-pvc
+
+# Scylla Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylla
+spec:
+  ports:
+  - port: 9042
+  selector:
+    app: scylla
