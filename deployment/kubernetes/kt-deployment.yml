@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kt
+  template:
+    metadata:
+      labels:
+        app: kt
+    spec:
+      initContainers:
+      - name: wait-for-scylla
+        image: busybox
+        command: ['sh', '-c', 'until nc -z scylla 9042; do echo waiting for scylla; sleep 2; done;']
+      - name: wait-for-redis
+        image: busybox
+        command: ['sh', '-c', 'until nc -z redis 6379; do echo waiting for redis; sleep 2; done;']
+      containers:
+      - name: kt
+        image: evilgenius13/kt:dev
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: discord_token
+        - name: AXIOM_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: axiom_key
+        - name: AXIOM_TRACE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: axiom_trace_key
+        - name: AXIOM_DATASET
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: axiom_dataset
+        - name: OPENAI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: openai_key
+        - name: OPENAI_ASSISTANT
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: openai_assistant
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: redis_password
+        volumeMounts:
+        - name: google-tts
+          mountPath: /run/secrets
+          readOnly: true
+      volumes:
+      - name: google-tts
+        secret:
+          secretName: google-tts
