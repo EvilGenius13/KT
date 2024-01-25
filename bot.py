@@ -12,6 +12,7 @@ from cogs.music import Music
 from cogs.xp_system import XpSystem
 from cogs.poke_quiz import PokeQuiz
 from cogs.ai import AI
+from cogs.analytics import Analytics
 from initializers.axiom_setup import AxiomHelper
 from initializers.tracing_setup import tracer
 from jobs.cache_event_handler import BatchCacheEventHandler
@@ -51,6 +52,7 @@ async def on_ready():
         await bot.add_cog(XpSystem(bot, session))
         await bot.add_cog(PokeQuiz(bot, session, cache_event_handler))
         await bot.add_cog(AI(bot))
+        await bot.add_cog(Analytics(bot))
         await bot.tree.sync()
 
         # Start the cache event handler
