@@ -58,11 +58,12 @@ spec:
             secretKeyRef:
               name: kt-secrets
               key: redis_password
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /initializers/google_tts.json
         volumeMounts:
-        - name: google-tts
-          mountPath: /run/secrets
-          readOnly: true
+          - name: google-tts
+            mountPath: "/initializers/google-tts.json"
+            subPath: "google-tts.json"
+            readOnly: true
       volumes:
-      - name: google-tts
-        secret:
-          secretName: google-tts
+        - name: google-tts
