@@ -58,6 +58,11 @@ spec:
             secretKeyRef:
               name: kt-secrets
               key: redis_password
+        - name: ENVIRONMENT
+          valueFrom:
+            secretKeyRef:
+              name: kt-secrets
+              key: environment
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /initializers/google_tts.json
         volumeMounts:

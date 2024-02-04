@@ -2,6 +2,10 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
+import time
+import requests
+import json
+from initializers.tracing_setup import tracer
 
 from db.db import setup_db_connection
 from cogs.text_commands import TextCommands
@@ -60,20 +64,60 @@ async def on_ready():
         
         print("KT is online")
 
+# TODO: DELETE ONCE COMPLETE
+def send_event_to_fastapi(data):
+    url = 'http://localhost:8000/ingest/event'
+    headers = {'Content-Type': 'application/json'}
+    try:
+        payload = json.dumps(data)
+        response = requests.post(url, data=payload, headers=headers)
+        return response.status_code
+    except Exception as e:
+        print(f"Error sending event to FastAPI: {e}")
+
+@bot.tree.command(name="test_logging_performance")
+async def test_logging_performance(interaction: discord.Interaction):
+    data = {
+        "data": {
+        "event": "test_event", "details": "speed comparison"
+            }
+        }  # Example data
+    num_requests = 5  # Number of requests to send
+
+    # Measure time for direct logging to Axiom
+    start_time = time.time()
+    for _ in range(num_requests):
+        with tracer.start_as_current_span("direct_logging_performance", {"type": "direct_performance_test"}):
+            axiom.send_event([data])
+    direct_time = time.time() - start_time
+
+    # Measure time for logging via FastAPI
+    start_time = time.time()
+    for _ in range(num_requests):
+        with tracer.start_as_current_span("fastapi_logging_performance", {"type": "fastapi_performance_test"}):
+            await asyncio.get_event_loop().run_in_executor(None, send_event_to_fastapi, data)
+    fastapi_time = time.time() - start_time
+
+    # Respond with the performance test results
+    await interaction.response.send_message(f"Direct logging time: {direct_time:.2f} seconds\n"
+                                            f"Logging via FastAPI app time: {fastapi_time:.2f} seconds")
 
 @bot.event
 async def on_command_error(ctx, error):
     # Prepare the error data
-    error_data = [{
-        "type": "error",
-        "description": str(error),
-        "command": ctx.command.name if ctx.command else "None",
-        "guild_id": str(ctx.guild.id) if ctx.guild else "DM",
-        "user_id": str(ctx.author.id)
-    }]
+    error_data = {
+        "data": {
+            "type": "error",
+            "environment": os.getenv("ENVIRONMENT"),
+            "description": str(error),
+            "command": ctx.command.name if ctx.command else "None",
+            "guild_id": str(ctx.guild.id) if ctx.guild else "DM",
+            "user_id": str(ctx.author.id)
+        }
+    }
 
     # Send the error data to Axiom
-    axiom.send_event(error_data)
+    axiom.send_event([error_data])
 
     await ctx.send(f"An error occurred: {str(error)}")
 
