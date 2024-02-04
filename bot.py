@@ -1,3 +1,4 @@
+# TODO: Scylla DB reconnect doesn't actually work.
 import discord
 from discord.ext import commands
 import os
@@ -66,7 +67,7 @@ async def on_ready():
 
 # TODO: DELETE ONCE COMPLETE
 def send_event_to_fastapi(data):
-    url = 'http://localhost:8000/ingest/event'
+    url = 'http://localhost:8010/ingest/event'
     headers = {'Content-Type': 'application/json'}
     try:
         payload = json.dumps(data)
