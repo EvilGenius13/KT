@@ -4,10 +4,9 @@ from discord.ui import Button, View
 import os
 import json
 from db.db import get_guild_settings, update_guild_settings
-from initializers.axiom_setup import AxiomHelper
+from helpers.starfire import Starfire
 from initializers.redis import r
 
-axiom = AxiomHelper()
 class TimezoneDropdown(discord.ui.Select):
     def __init__(self, session, current_timezone):
         self.session = session
@@ -44,10 +43,10 @@ class Settings(commands.Cog):
             if result.one():
                 # Guild is already registered
                 await ctx.send(f"Your guild, {guild_name}, is already registered.")
-                axiom.send_event([{"type": "registration", "status": "already_registered", "guild_id": guild_id, "guild_name": guild_name}])
+                Starfire.log({"data":{"type": "registration", "status": "already_registered", "guild_id": guild_id, "guild_name": guild_name}})
                 return
             else:
-                axiom.send_event([{"type": "registration", "status": "success", "guild_id": guild_id, "guild_name": guild_name}])
+                Starfire.log({"data":{"type": "registration", "status": "success", "guild_id": guild_id, "guild_name": guild_name}})
         except Exception as e:
             raise
         

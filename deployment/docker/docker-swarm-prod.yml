@@ -28,7 +28,7 @@ services:
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - AXIOM_KEY=${AXIOM_KEY}
-      - AXIOM_TRACE_KEY=${AXIOM_TRACING_KEY}
+      - AXIOM_TRACE_KEY=${AXIOM_TRACE_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
       - OPENAI_KEY=${OPENAI_KEY}
       - OPENAI_ASSISTANT=${OPENAI_ASSISTANT}
@@ -62,6 +62,15 @@ services:
           memory: 256M
       restart_policy:
         condition: on-failure
+  
+  starfire:
+    image: evilgenius13/axiomstarfire:latest
+    container_name: starfire
+    ports:
+      - "8010:8000"
+    environment:
+      - AXIOM_KEY=${AXIOM_KEY}
+      - AXIOM_DATASET=${AXIOM_DATASET}
 
 secrets:
   google_tts:

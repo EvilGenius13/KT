@@ -17,6 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
+        pip install pytest==7.4.3  # Temp check for failing tests on 8.0.0
     - name: Run tests
       run: |
         pytest tests/

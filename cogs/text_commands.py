@@ -1,10 +1,8 @@
 import discord
 from discord.ext import commands, tasks
-from initializers.axiom_setup import AxiomHelper
+from helpers.starfire import Starfire
 from datetime import datetime, timedelta
 import pytz
-
-axiom = AxiomHelper()
 
 class TextCommands(commands.Cog):
   GAME_NIGHT_TASK_ID = 'game_night_task'
@@ -48,8 +46,8 @@ class TextCommands(commands.Cog):
   @commands.command()
   async def hello(self, ctx):
     user = ctx.message.author
-    data = [{"type": "command", "value": "hello_message"}]
-    axiom.send_event(data)
+    data = {"data":{"type": "command", "value": "hello_message"}}
+    Starfire.log(data)
     await ctx.send(f'Hey {user.mention}')
   
   @commands.command()
@@ -65,8 +63,8 @@ class TextCommands(commands.Cog):
   @tasks.loop(hours=24)
   async def game_night(self):
       if self.__class__.GAME_NIGHT_TASK_ID in self.__class__.running_tasks:
-            data = [{"type": "error", "value": "game night task already running"}]
-            axiom.send_event(data)
+            data = {"data":{"type": "error", "value": "game night task already running"}}
+            Starfire.log(data)
             return
       
       next_game_night = self.calculate_next_game_night_time(datetime.now())

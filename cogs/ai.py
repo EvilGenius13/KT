@@ -8,10 +8,7 @@ import datetime
 client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 from initializers.tracing_setup import tracer
-from initializers.axiom_setup import AxiomHelper
-
-axiom = AxiomHelper()
-
+from helpers.starfire import Starfire
 
 class AI(commands.Cog):
     def __init__(self, bot):
@@ -66,8 +63,8 @@ class AI(commands.Cog):
                                 thread_id=my_thread_id
                             )
 
-                            data = [{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}]
-                            axiom.send_event(data)
+                            data = {"data":{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}}
+                            Starfire.log(data)
                             break
                         elif keep_retrieving_run.status == "queued" or keep_retrieving_run.status == "in_progress":
                             pass
@@ -103,8 +100,8 @@ class AI(commands.Cog):
                 await ctx.send(
                     "An error occurred while sending the message. Please try again."
                 )
-            data = [{"type": "command", "value": "tws_chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}]
-            axiom.send_event(data)
+            data = {"data":{"type": "command", "value": "tws_chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": all_messages.data[0].content[0].text.value}}
+            Starfire.log(data)
             self.last_message_time = current_time
             self.last_author_id = author_id
 
@@ -152,5 +149,5 @@ class AI(commands.Cog):
                 print(f"Error during Discord operation: {type(e).__name__}: {e}")
                 await ctx.send("An error occurred while sending the message. Please try again.")
             
-            data = [{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": answer}]
-            axiom.send_event(data)
+            data = {"data":{"type": "command", "value": "chat", "user": str(ctx.author.id), "user-message": message, "kt-reply": answer}}
+            Starfire.log(data)
