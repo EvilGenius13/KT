@@ -3,13 +3,11 @@ from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from dotenv import load_dotenv
 import time
-from initializers.axiom_setup import AxiomHelper
-
-axiom = AxiomHelper()
+from helpers.starfire import Starfire
 
 load_dotenv()
 
-
+ENVIRONMENT= os.getenv('ENVIRONMENT')
 scylla_username = os.getenv('SCYLLA_USERNAME')
 scylla_password = os.getenv('SCYLLA_PASSWORD')
 
@@ -136,18 +134,18 @@ def create_keyspace_and_tables(session):
         print(f"Error creating keyspace and tables: {e}")
 
 def setup_db_connection():
-    cluster = create_cluster()
     retry_attempts = 5
-    retry_delay = 10  # seconds
+    retry_delay = 60  # seconds
 
     for attempt in range(retry_attempts):
+        cluster = create_cluster()
         try:
             session = cluster.connect()
             # Confirm connection
             row = session.execute("SELECT cluster_name FROM system.local").one()
             if row:
                 print(f"Successfully connected to ScyllaDB cluster: {row.cluster_name}")
-                axiom.send_event([{ "type": "info", "description": f"Successfully connected to ScyllaDB cluster: {row.cluster_name}" }])
+                Starfire.log({"data":{ "type": "info", "description": f"Successfully connected to ScyllaDB cluster: {row.cluster_name}", "environment": ENVIRONMENT }})
             else:
                 print("Connection to ScyllaDB cluster established, but couldn't retrieve cluster name.")
             
@@ -155,7 +153,8 @@ def setup_db_connection():
             return session
         except Exception as e:
             print(f"Connection attempt {attempt + 1} failed: {e}")
-            axiom.send_event([{ "type": "error", "description": f"Scylla Connection attempt {attempt + 1} failed: {e}" }])
+            Starfire.log({"data":{ "type": "error", "description": f"Scylla Connection attempt {attempt + 1} failed: {e}", "environment": ENVIRONMENT}})
+            cluster.shutdown()  # Ensure proper shutdown of the cluster instance to clean up resources
             if attempt < retry_attempts - 1:
                 print(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)

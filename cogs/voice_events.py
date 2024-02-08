@@ -10,10 +10,8 @@ from db.db import get_guild_settings
 from google.cloud import texttospeech
 import uuid
 from initializers.tracing_setup import tracer
-from initializers.axiom_setup import AxiomHelper
+from helpers.starfire import Starfire
 from initializers.redis import r
-
-axiom = AxiomHelper()
 
 
 class VoiceEvents(commands.Cog):
@@ -205,11 +203,11 @@ class VoiceEvents(commands.Cog):
                             print(f"Disconnected from voice channel in guild {member.guild.name}")
             
             except Exception as e:
-                error_data = [{
+                error_data = {"data":{
                     "type": "error",
                     "description": str(e),
-                }]
-                axiom.send_event(error_data)
+                }}
+                Starfire.log(error_data)
 
 
     

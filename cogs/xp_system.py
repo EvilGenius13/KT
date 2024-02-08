@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands, tasks
 from initializers.tracing_setup import tracer
-from initializers.axiom_setup import AxiomHelper
+from helpers.starfire import Starfire
 import datetime
 from initializers.redis import r
-
-axiom = AxiomHelper()
 
 
 class XpSystem(commands.Cog):
@@ -63,7 +61,7 @@ class XpSystem(commands.Cog):
                     message.guild.id, message.author.id, new_xp, new_level
                 )
 
-                xp_data = [
+                xp_data = { "data":
                     {
                         "type": "xp",
                         "guild_id": str(message.guild.id),
@@ -74,8 +72,8 @@ class XpSystem(commands.Cog):
                         "current_level": current_level,
                         "new_level": new_level,
                     }
-                ]
-                axiom.send_event(xp_data)
+                }
+                Starfire.log(xp_data)
 
                 if new_level > current_level:
                     await message.channel.send(f"{message.author.mention} You've leveled up to level {new_level}!")
@@ -107,7 +105,8 @@ class XpSystem(commands.Cog):
                     await message.channel.send(
                         f"Congratulations {member.mention}, you have been promoted to {new_role.name}!"
                     )
-                    data = [{
+                    data = {
+                        "data":{
                         "type": "role",
                         "guild_id": str(message.guild.id),
                         "user_id": str(message.author.id),
@@ -115,8 +114,9 @@ class XpSystem(commands.Cog):
                         "role_name": str(new_role.name),
                         "role_id": str(new_role.id),
                         "role_action": "add"
-                    }]
-                    axiom.send_event(data)
+                        }
+                    }
+                    Starfire.log(data)
                 else:
                     self.log_role_event(member, "role not found", new_level)
             else:
@@ -179,11 +179,13 @@ class XpSystem(commands.Cog):
 
     def log_role_event(self, member, action, level):
         data = {
+            "data": {
             "type": "role",
             "guild_id": str(member.guild.id),
             "user_id": str(member.id),
             "user_name": str(member.name),
             "role_action": action,
             "level": level
+            }
         }
-        axiom.send_event([data])
+        Starfire.log(data)
