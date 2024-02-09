@@ -1,9 +1,6 @@
 import asyncio
-import axiom
-from initializers.axiom_setup import AxiomHelper
+from helpers.starfire import Starfire
 from initializers.redis import r
-
-axiom = AxiomHelper()
 
 class BatchCacheEventHandler:
   def __init__(self):
@@ -21,11 +18,13 @@ class BatchCacheEventHandler:
     
     if cache_hits or cache_misses:
         event_data = {
+           "data": {
             "type": "cache",
             "cache_hits": cache_hits,
             "cache_misses": cache_misses
+          }
         }
-        axiom.send_event([event_data])
+        Starfire.log(event_data)
         
         # Reset the counters
         r.set("cache_hits", 0)
