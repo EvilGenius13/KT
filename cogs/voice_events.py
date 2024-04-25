@@ -76,7 +76,7 @@ class VoiceEvents(commands.Cog):
                 # Build the voice request, select the language code and the SSML voice gender
                 voice = texttospeech.VoiceSelectionParams(
                     language_code="en-US",
-                    name="en-US-Journey-F",
+                    name="en-US-Studio-O",
                     ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
                 )
 

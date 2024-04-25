@@ -19,6 +19,8 @@ services:
       placement:
         constraints:
           - node.hostname == eg-1 # need to change this to the name of your node
+    networks:
+      - bot_network
           
   kt:
     image: evilgenius13/kt:dev
@@ -45,6 +47,8 @@ services:
         condition: on-failure
     secrets:
       - google_tts
+    networks:
+      - bot_network
 
   redis:
     image: redis:7.2.4
@@ -62,6 +66,8 @@ services:
           memory: 256M
       restart_policy:
         condition: on-failure
+    networks:
+      - bot_network
   
   starfire:
     image: evilgenius13/axiomstarfire:latest
@@ -71,6 +77,8 @@ services:
     environment:
       - AXIOM_KEY=${AXIOM_KEY}
       - AXIOM_DATASET=${AXIOM_DATASET}
+    networks:
+      - bot_network
 
 secrets:
   google_tts:
@@ -79,3 +87,7 @@ secrets:
 volumes:
   scylla_data:
   redis_data:
+
+networks:
+  bot_network:
+    driver: bridge
