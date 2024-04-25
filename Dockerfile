@@ -1,5 +1,5 @@
 # Use an official Python runtime as a base image
-FROM python:3.10-buster
+FROM python:3.10-slim-buster
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libopus0 \
+    python3-dev \
     libasound2-dev \
 && rm -rf /var/lib/apt/lists/*
 
