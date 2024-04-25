@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Install system dependencies for general use and audio handling
 RUN apt-get update && apt-get install -y \
+    build-essential \ 
     ffmpeg \
     libopus0 \
     python3-dev \
