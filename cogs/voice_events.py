@@ -183,7 +183,7 @@ class VoiceEvents(commands.Cog):
                     vc.stop()  # Stop any currently playing audio
                     await asyncio.sleep(0.5)
                     scheduled_break_text = random.choice(self.scheduled_break_messages)
-                    await self.play_greeting(vc, scheduled_break_text)
+                    await self.play_greeting_experimental(vc, scheduled_break_text)
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def break_time(self):
@@ -203,7 +203,7 @@ class VoiceEvents(commands.Cog):
                     vc.stop()
                     await asyncio.sleep(0.5)
                     break_text = random.choice(self.break_messages)
-                    await self.play_greeting(vc, break_text)
+                    await self.play_greeting_experimental(vc, break_text)
 
     async def play_dj_announcement(self, guild):
         vc = discord.utils.get(self.bot.voice_clients, guild=guild)
@@ -211,7 +211,7 @@ class VoiceEvents(commands.Cog):
             vc.stop()
             await asyncio.sleep(0.5)
             dj_announcement_text = "DJ KT is on the decks!"
-            await self.play_greeting(vc, dj_announcement_text)
+            await self.play_greeting_experimental(vc, dj_announcement_text)
     
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -233,7 +233,7 @@ class VoiceEvents(commands.Cog):
                         if vc:
                             await vc.move_to(after.channel)  # Move the bot to the new channel
                             if not vc.is_playing():
-                                await self.play_greeting(vc, greeting_text)
+                                await self.play_greeting_experimental(vc, greeting_text)
                             else:
                                 print(f"Skipped greeting for {member} as audio is already playing.")
 

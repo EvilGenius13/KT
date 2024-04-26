@@ -13,9 +13,11 @@ RUN apt-get update && apt-get install -y \
     libasound2-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy your application files and install Python dependencies
+# Copy your application files
 COPY . /build
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Python dependencies
+RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Final stage
 FROM python:3.10-slim-buster
@@ -23,15 +25,20 @@ FROM python:3.10-slim-buster
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Install runtime dependencies (if any)
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libopus0 \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only the necessary artifacts from the builder stage
+# Copy the necessary artifacts from the builder stage
 COPY --from=builder /build /app
+# Ensure to copy Python packages
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable:
+ENV PATH=/root/.local/bin:$PATH
 
 # Make port 80 available to the world outside this container
 EXPOSE 80
