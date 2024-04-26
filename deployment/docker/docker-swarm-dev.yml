@@ -37,6 +37,9 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google_tts
       - ENVIRONMENT=${ENVIRONMENT}
+      - HT_USER_ID=${HT_USER_ID}
+      - HT_KEY=${HT_KEY}
+
     deploy:
       replicas: 1
       resources:

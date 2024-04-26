@@ -12,7 +12,16 @@ import uuid
 from initializers.tracing_setup import tracer
 from helpers.starfire import Starfire
 from initializers.redis import r
+import os
 
+# Experimental settings
+from pyht import Client, TTSOptions, Format
+from dotenv import load_dotenv
+load_dotenv()
+client = Client(
+    user_id=os.getenv("HT_USER_ID"),
+    api_key=os.getenv("HT_KEY")
+)
 
 class VoiceEvents(commands.Cog):
     def __init__(self, bot, session, cache_event_handler):
@@ -114,7 +123,50 @@ class VoiceEvents(commands.Cog):
                     after=after_playing
                 )
 
+    async def play_greeting_experimental(self, voice_client, text):
+        with tracer.start_as_current_span("play_greeting_experimental"):
+            try:
+                # Set up TTS options
+                options = TTSOptions(
+                    voice="s3://voice-cloning-zero-shot/d585a4ac-7cf6-4f68-b119-115fa52d6ad1/enhanced/manifest.json",
+                    sample_rate=44_100,
+                    format=Format.FORMAT_MP3,
+                    speed=1,
+                    temperature=2,
+                    text_guidance=1,
+                    voice_guidance=2,
+                )
 
+                # Generate speech and save to a file
+                tts_filename = f"sounds/tts-experimental-{uuid.uuid4()}.mp3"
+                os.makedirs(os.path.dirname(tts_filename), exist_ok=True)
+                with open(tts_filename, "wb") as out_file:
+                    for audio_chunk in client.tts(text=text, options=options):
+                        out_file.write(audio_chunk)  # Write each chunk to the file
+
+                # Define an 'after' callback function to delete the file
+                def after_playing(error):
+                    print("Play.ht TTS playback finished:", error)
+                    try:
+                        os.remove(tts_filename)  # Delete the file after playing
+                    except OSError as e:
+                        print(f"Error deleting file {tts_filename}: {e}")
+
+                # Play the generated MP3 file in the voice channel
+                with tracer.start_as_current_span("play_audio"):
+                    voice_client.play(
+                        discord.FFmpegPCMAudio(tts_filename),
+                        after=after_playing
+                    )
+
+            except Exception as e:
+                error_data = {
+                    "type": "error",
+                    "description": str(e),
+                }
+                Starfire.log(error_data)
+                print("Failed to play greeting:", e)
+        
     @tasks.loop(minutes=1)  # Check the time every minute
     async def schedule_break(self):
         for guild in self.bot.guilds:
@@ -131,7 +183,7 @@ class VoiceEvents(commands.Cog):
                     vc.stop()  # Stop any currently playing audio
                     await asyncio.sleep(0.5)
                     scheduled_break_text = random.choice(self.scheduled_break_messages)
-                    await self.play_greeting(vc, scheduled_break_text)
+                    await self.play_greeting_experimental(vc, scheduled_break_text)
 
     @tasks.loop(minutes=1)  # Check the time every minute
     async def break_time(self):
@@ -151,7 +203,7 @@ class VoiceEvents(commands.Cog):
                     vc.stop()
                     await asyncio.sleep(0.5)
                     break_text = random.choice(self.break_messages)
-                    await self.play_greeting(vc, break_text)
+                    await self.play_greeting_experimental(vc, break_text)
 
     async def play_dj_announcement(self, guild):
         vc = discord.utils.get(self.bot.voice_clients, guild=guild)
@@ -159,7 +211,7 @@ class VoiceEvents(commands.Cog):
             vc.stop()
             await asyncio.sleep(0.5)
             dj_announcement_text = "DJ KT is on the decks!"
-            await self.play_greeting(vc, dj_announcement_text)
+            await self.play_greeting_experimental(vc, dj_announcement_text)
     
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -181,7 +233,7 @@ class VoiceEvents(commands.Cog):
                         if vc:
                             await vc.move_to(after.channel)  # Move the bot to the new channel
                             if not vc.is_playing():
-                                await self.play_greeting(vc, greeting_text)
+                                await self.play_greeting_experimental(vc, greeting_text)
                             else:
                                 print(f"Skipped greeting for {member} as audio is already playing.")
 
@@ -191,7 +243,7 @@ class VoiceEvents(commands.Cog):
                         if not vc:
                             vc = await after.channel.connect()
                         if not vc.is_playing():
-                            await self.play_greeting(vc, greeting_text)
+                            await self.play_greeting_experimental(vc, greeting_text)
                         else:
                             print(f"Skipped greeting for {member} as audio is already playing.")
                     

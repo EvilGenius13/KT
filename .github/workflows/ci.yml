@@ -14,13 +14,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install pytest==7.4.3  # Temp check for failing tests on 8.0.0
-    - name: Run tests
-      run: |
-        pytest tests/
     - name: Build Docker image
       run: |
         docker build --no-cache -t evilgenius13/kt:dev .

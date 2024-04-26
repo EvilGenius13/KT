@@ -14,3 +14,6 @@ opentelemetry-exporter-otlp==1.21.0
 google-cloud-texttospeech
 openai
 redis
+numpy
+simpleaudio
+pyht
